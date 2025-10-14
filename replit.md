@@ -93,6 +93,57 @@ Preferred communication style: Simple, everyday language.
 
 ### Configuration Requirements
 - Fraud detection threshold: Configurable (default 0.7)
+- Manual review threshold: Configurable (default 0.5)
 - ONNX model path: `wwwroot/onnx/fraud_model.onnx`
 - GeoIP database: External MaxMind database file
 - Connection strings and API keys: Managed via Azure Key Vault
+
+## Recent Enhancements (October 2025)
+
+### Repository Pattern & Unit of Work
+- **Implementation**: Created repository interfaces (`IRepository<T>`, `IUserProfileRepository`, `ITransactionRepository`, `IFraudAlertRepository`) with Cosmos DB implementations
+- **Unit of Work Pattern**: Provides centralized data access with repository aggregation
+- **Note**: Cosmos DB limitations - operations execute immediately without traditional ACID transactions across containers. Transaction methods provided for interface compliance only.
+
+### Distributed Tracing
+- **Activity Source**: Custom `DistributedTracing` infrastructure using `System.Diagnostics.Activity`
+- **Tracing Extensions**: Fraud-specific tags (user_id, transaction_id, fraud_score, decision, risk_level)
+- **Event Tracking**: Built-in events for fraud detection, manual review triggers, and alert notifications
+- **Performance Monitoring**: Tracks operation duration for fraud scoring pipeline (target: <300ms)
+
+### Idempotency Middleware
+- **Purpose**: Prevents duplicate transaction processing for POST/PUT/PATCH requests
+- **Implementation**: Memory cache-based with Idempotency-Key header support
+- **Features**:
+  - Short-circuits duplicate requests before business logic execution
+  - Concurrent request detection with 409 Conflict response
+  - 24-hour cache retention for idempotency keys
+  - X-Idempotency-Replay header on cached responses
+
+### Enhanced Fraud Detection
+
+#### Advanced Risk Scoring Service
+- **Device Risk**: Fraud rate analysis, multi-user device detection
+- **Velocity Risk**: Transaction volume and frequency analysis (1h, 24h windows)
+- **Geolocation Risk**: IP location changes, high-risk country detection, impossible travel detection
+- **Amount Risk**: Z-score analysis against user's historical transaction patterns
+- **Time-Based Risk**: Unusual hour detection, hourly pattern analysis
+
+#### Ensemble Model Service
+- **Multi-Model Approach**: Combines 4 models with weighted averaging
+  - ONNX Model (40% weight)
+  - Rule-Based Model (25% weight)
+  - Statistical Model (20% weight)
+  - Behavioral Model (15% weight)
+- **Fallback Handling**: Graceful degradation when individual models fail
+
+#### Fraud Rules Engine
+- **Blocking Rules**: Blocked countries, blacklisted users, duplicate transactions
+- **Review Rules**: High amounts, velocity violations, suspicious patterns, multiple countries
+- **Configurable Thresholds**: Amount limits, transaction frequency, country restrictions
+
+### Architecture Improvements
+- **Interface Segregation**: Separated service interfaces from implementations
+- **Dependency Injection**: All new services registered with scoped lifetime
+- **Logging & Monitoring**: Comprehensive logging with distributed tracing integration
+- **Error Handling**: Graceful error handling with fallback mechanisms in ensemble models

@@ -3,6 +3,17 @@ using GlobalPaymentFraudDetection.Repositories;
 
 namespace GlobalPaymentFraudDetection.Infrastructure;
 
+/// <summary>
+/// Unit of Work implementation for Cosmos DB repositories.
+/// 
+/// IMPORTANT LIMITATIONS:
+/// - Cosmos DB does not support traditional ACID transactions across containers
+/// - Each repository operation (Add, Update, Delete) executes immediately
+/// - SaveChanges(), BeginTransaction(), CommitTransaction(), and RollbackTransaction() 
+///   are provided for interface compliance but do not provide transactional guarantees
+/// - For atomic operations within a single container, use Cosmos DB stored procedures
+/// - Use optimistic concurrency with ETags for conflict resolution
+/// </summary>
 public class UnitOfWork : IUnitOfWork
 {
     private readonly CosmosClient _cosmosClient;

@@ -69,10 +69,10 @@ public class IdempotencyMiddleware
 
         _cache.Set(processingKey, true, TimeSpan.FromMinutes(5));
 
+        var originalBodyStream = context.Response.Body;
+
         try
         {
-            var originalBodyStream = context.Response.Body;
-
             using (var responseBody = new MemoryStream())
             {
                 context.Response.Body = responseBody;
@@ -101,6 +101,7 @@ public class IdempotencyMiddleware
         }
         finally
         {
+            context.Response.Body = originalBodyStream;
             _cache.Remove(processingKey);
         }
     }
