@@ -1,0 +1,3 @@
+modules = ["dotnet", "dotnet-8.0"]
+[agent]
+expertMode = true
