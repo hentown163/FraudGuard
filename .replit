@@ -1,3 +1,31 @@
 modules = ["dotnet", "dotnet-8.0"]
 [agent]
 expertMode = true
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "FraudDetectionApp"
+
+[[workflows.workflow]]
+name = "FraudDetectionApp"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd GlobalPaymentFraudDetection && dotnet run --urls \"http://0.0.0.0:5000\""
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[ports]]
+localPort = 5000
+externalPort = 80

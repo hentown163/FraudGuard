@@ -21,8 +21,8 @@ public class PaymentGatewayService : IPaymentGatewayService
         
         var stripeEvent = EventUtility.ConstructEvent(payload, signature, webhookSecret);
         
-        if (stripeEvent.Type == Events.ChargeSucceeded || 
-            stripeEvent.Type == Events.PaymentIntentSucceeded)
+        if (stripeEvent.Type == "charge.succeeded" || 
+            stripeEvent.Type == "payment_intent.succeeded")
         {
             var charge = stripeEvent.Data.Object as Charge;
             
@@ -34,8 +34,8 @@ public class PaymentGatewayService : IPaymentGatewayService
                 Amount = (charge?.Amount ?? 0) / 100m,
                 Currency = charge?.Currency?.ToUpper() ?? "USD",
                 Status = charge?.Status ?? "unknown",
-                PaymentMethodId = charge?.PaymentMethodId ?? string.Empty,
-                PaymentMethodType = charge?.PaymentMethod?.Type ?? "unknown",
+                PaymentMethodId = charge?.PaymentMethod ?? string.Empty,
+                PaymentMethodType = "card",
                 RawData = new Dictionary<string, object> { { "charge", charge ?? new() } },
                 CreatedAt = DateTime.UtcNow
             };

@@ -51,19 +51,19 @@ public class OnnxModelService : IOnnxModelService
             var inputs = new List<NamedOnnxValue>
             {
                 NamedOnnxValue.CreateFromTensor("amount", 
-                    new DenseTensor<float>(new[] { (float)transaction.Amount }, new[] { 1 })),
+                    new DenseTensor<float>(new[] { (float)transaction.Amount }, new[] { 1, 1 })),
                 NamedOnnxValue.CreateFromTensor("user_id_hash", 
-                    new DenseTensor<float>(new[] { HashString(transaction.UserId) }, new[] { 1 })),
+                    new DenseTensor<float>(new[] { HashString(transaction.UserId) }, new[] { 1, 1 })),
                 NamedOnnxValue.CreateFromTensor("total_transactions", 
-                    new DenseTensor<float>(new[] { userProfile?.TotalTransactions ?? 0 }, new[] { 1 })),
+                    new DenseTensor<float>(new[] { (float)(userProfile?.TotalTransactions ?? 0) }, new[] { 1, 1 })),
                 NamedOnnxValue.CreateFromTensor("avg_amount", 
-                    new DenseTensor<float>(new[] { (float)(userProfile?.AvgAmount ?? 0) }, new[] { 1 })),
+                    new DenseTensor<float>(new[] { (float)(userProfile?.AvgAmount ?? 0) }, new[] { 1, 1 })),
                 NamedOnnxValue.CreateFromTensor("suspicious_flags", 
-                    new DenseTensor<float>(new[] { userProfile?.SuspiciousFlags ?? 0 }, new[] { 1 })),
+                    new DenseTensor<float>(new[] { (float)(userProfile?.SuspiciousFlags ?? 0) }, new[] { 1, 1 })),
                 NamedOnnxValue.CreateFromTensor("velocity_score", 
-                    new DenseTensor<float>(new[] { (float)behavioralData.Velocity?.VelocityScore ?? 0 }, new[] { 1 })),
+                    new DenseTensor<float>(new[] { (float)(behavioralData.Velocity?.VelocityScore ?? 0) }, new[] { 1, 1 })),
                 NamedOnnxValue.CreateFromTensor("behavioral_risk", 
-                    new DenseTensor<float>(new[] { (float)behavioralData.RiskScore }, new[] { 1 }))
+                    new DenseTensor<float>(new[] { (float)behavioralData.RiskScore }, new[] { 1, 1 }))
             };
 
             using var results = _session.Run(inputs);

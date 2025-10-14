@@ -18,6 +18,14 @@ build_property.GenerateRazorMetadataSourceChecksumAttributes =
 build_property.MSBuildProjectDirectory = /home/runner/workspace/GlobalPaymentFraudDetection
 build_property._RazorSourceGeneratorDebug = 
 
+[/home/runner/workspace/GlobalPaymentFraudDetection/Pages/Alerts/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQWxlcnRzL0luZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/runner/workspace/GlobalPaymentFraudDetection/Pages/Dashboard/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvRGFzaGJvYXJkL0luZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
 [/home/runner/workspace/GlobalPaymentFraudDetection/Pages/Error.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXMvRXJyb3IuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
@@ -32,6 +40,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [/home/runner/workspace/GlobalPaymentFraudDetection/Pages/Shared/_ValidationScriptsPartial.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXMvU2hhcmVkL19WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/runner/workspace/GlobalPaymentFraudDetection/Pages/Transactions/Details.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvVHJhbnNhY3Rpb25zL0RldGFpbHMuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [/home/runner/workspace/GlobalPaymentFraudDetection/Pages/_ViewImports.cshtml]

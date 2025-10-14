@@ -74,7 +74,7 @@ public class BehavioralAnalysisService : IBehavioralAnalysisService
         {
             if (_geoIpReader == null)
             {
-                return new GeoLocationData { IpAddress = ipAddress };
+                return new GeoLocationData();
             }
 
             var response = await Task.Run(() => _geoIpReader.City(ipAddress));
