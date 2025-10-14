@@ -1,0 +1,161 @@
+@page
+@model GlobalPaymentFraudDetection.Pages.Transactions.DetailsModel
+@{
+    ViewData["Title"] = "Transaction Details";
+}
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1>Transaction Details</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/Dashboard">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Transaction Details</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Transaction Information</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">Transaction ID:</dt>
+                        <dd class="col-sm-8"><code>@Model.TransactionId</code></dd>
+
+                        <dt class="col-sm-4">User ID:</dt>
+                        <dd class="col-sm-8">@Model.UserId</dd>
+
+                        <dt class="col-sm-4">Amount:</dt>
+                        <dd class="col-sm-8"><strong>$@Model.Amount @Model.Currency</strong></dd>
+
+                        <dt class="col-sm-4">Payment Gateway:</dt>
+                        <dd class="col-sm-8"><span class="badge bg-info">@Model.PaymentGateway</span></dd>
+
+                        <dt class="col-sm-4">Payment Method:</dt>
+                        <dd class="col-sm-8">@Model.PaymentMethod</dd>
+
+                        <dt class="col-sm-4">Timestamp:</dt>
+                        <dd class="col-sm-8">@Model.Timestamp</dd>
+
+                        <dt class="col-sm-4">Status:</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge @(Model.Status == "APPROVED" ? "bg-success" : Model.Status == "DECLINED" ? "bg-danger" : "bg-warning")">
+                                @Model.Status
+                            </span>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Fraud Analysis</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-5">Fraud Probability:</dt>
+                        <dd class="col-sm-7">
+                            <div class="progress">
+                                <div class="progress-bar @(Model.FraudProbability > 0.7 ? "bg-danger" : Model.FraudProbability > 0.5 ? "bg-warning" : "bg-success")" 
+                                     style="width: @((Model.FraudProbability * 100))%">
+                                    @((Model.FraudProbability * 100).ToString("F1"))%
+                                </div>
+                            </div>
+                        </dd>
+
+                        <dt class="col-sm-5">Decision:</dt>
+                        <dd class="col-sm-7">
+                            <span class="badge @(Model.Decision == "APPROVED" ? "bg-success" : "bg-danger")">
+                                @Model.Decision
+                            </span>
+                        </dd>
+
+                        <dt class="col-sm-5">Review Status:</dt>
+                        <dd class="col-sm-7">@Model.ReviewStatus</dd>
+
+                        <dt class="col-sm-5">Reason:</dt>
+                        <dd class="col-sm-7">@Model.Reason</dd>
+                    </dl>
+
+                    <h6 class="mt-3">Risk Factors</h6>
+                    <ul class="list-group">
+                        @foreach (var factor in Model.RiskFactors)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                @factor.Key
+                                <span class="badge bg-primary rounded-pill">@factor.Value.ToString("F2")</span>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Location & Device Information</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">IP Address:</dt>
+                        <dd class="col-sm-8">@Model.IpAddress</dd>
+
+                        <dt class="col-sm-4">Location:</dt>
+                        <dd class="col-sm-8">@Model.City, @Model.Country</dd>
+
+                        <dt class="col-sm-4">Device ID:</dt>
+                        <dd class="col-sm-8"><code>@Model.DeviceId</code></dd>
+
+                        <dt class="col-sm-4">Device Type:</dt>
+                        <dd class="col-sm-8">@Model.DeviceType</dd>
+
+                        <dt class="col-sm-4">Browser:</dt>
+                        <dd class="col-sm-8">@Model.Browser</dd>
+
+                        <dt class="col-sm-4">OS:</dt>
+                        <dd class="col-sm-8">@Model.OperatingSystem</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Manual Review Actions</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <input type="hidden" name="TransactionId" value="@Model.TransactionId" />
+                        <div class="mb-3">
+                            <label class="form-label">Review Decision</label>
+                            <select class="form-select" name="ReviewDecision">
+                                <option value="">Select decision...</option>
+                                <option value="APPROVE">Approve Transaction</option>
+                                <option value="DECLINE">Decline Transaction</option>
+                                <option value="ESCALATE">Escalate for Investigation</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Review Notes</label>
+                            <textarea class="form-control" name="ReviewNotes" rows="3" placeholder="Add review notes..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit Review</button>
+                        <a href="/Dashboard" class="btn btn-secondary">Back to Dashboard</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

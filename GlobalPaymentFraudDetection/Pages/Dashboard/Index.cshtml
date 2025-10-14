@@ -1,0 +1,278 @@
+@page
+@model GlobalPaymentFraudDetection.Pages.Dashboard.IndexModel
+@{
+    ViewData["Title"] = "Fraud Detection Dashboard";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="mb-3">Global Payment Fraud Detection Dashboard</h1>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Total Transactions</h5>
+                    <h2 id="totalTransactions">0</h2>
+                    <p class="card-text">Last 24 Hours</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">Approved</h5>
+                    <h2 id="approvedTransactions">0</h2>
+                    <p class="card-text">Success Rate: <span id="successRate">0%</span></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-danger">
+                <div class="card-body">
+                    <h5 class="card-title">Declined (Fraud)</h5>
+                    <h2 id="declinedTransactions">0</h2>
+                    <p class="card-text">Fraud Rate: <span id="fraudRate">0%</span></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Review</h5>
+                    <h2 id="pendingReview">0</h2>
+                    <p class="card-text">Manual Review Required</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Transaction Fraud Score Trend</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="fraudTrendChart" height="80"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Risk Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="riskDistributionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>Real-Time Transaction Stream</h5>
+                    <span class="badge bg-success" id="connectionStatus">Connected</span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="transactionTable">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Transaction ID</th>
+                                    <th>User ID</th>
+                                    <th>Amount</th>
+                                    <th>Gateway</th>
+                                    <th>Fraud Score</th>
+                                    <th>Decision</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactionTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Active Fraud Alerts</h5>
+                </div>
+                <div class="card-body">
+                    <div id="alertsContainer">
+                        <p class="text-muted">No active alerts</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
+    <script>
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/fraudhub")
+            .withAutomaticReconnect()
+            .build();
+
+        let fraudTrendChart, riskDistributionChart;
+        let transactionData = [];
+
+        connection.on("ReceiveTransactionUpdate", function (transaction) {
+            addTransactionToTable(transaction);
+            updateStatistics();
+        });
+
+        connection.on("ReceiveFraudAlert", function (alert) {
+            addAlertToUI(alert);
+        });
+
+        connection.on("ReceiveScoreUpdate", function (score) {
+            updateScoreInTable(score);
+            updateCharts(score);
+        });
+
+        connection.start().then(function () {
+            document.getElementById("connectionStatus").textContent = "Connected";
+            document.getElementById("connectionStatus").className = "badge bg-success";
+        }).catch(function (err) {
+            document.getElementById("connectionStatus").textContent = "Disconnected";
+            document.getElementById("connectionStatus").className = "badge bg-danger";
+            console.error(err.toString());
+        });
+
+        function addTransactionToTable(transaction) {
+            const tbody = document.getElementById("transactionTableBody");
+            const row = tbody.insertRow(0);
+            row.id = `tx-${transaction.transactionId}`;
+            
+            row.innerHTML = `
+                <td>${new Date(transaction.timestamp).toLocaleTimeString()}</td>
+                <td>${transaction.transactionId.substring(0, 8)}...</td>
+                <td>${transaction.userId.substring(0, 8)}...</td>
+                <td>$${transaction.amount.toFixed(2)} ${transaction.currency}</td>
+                <td><span class="badge bg-info">${transaction.paymentGateway}</span></td>
+                <td><div class="spinner-border spinner-border-sm" role="status"></div></td>
+                <td><span class="badge bg-secondary">Processing...</span></td>
+                <td><button class="btn btn-sm btn-outline-primary" onclick="viewDetails('${transaction.transactionId}')">Details</button></td>
+            `;
+
+            transactionData.push(transaction);
+            if (tbody.rows.length > 20) {
+                tbody.deleteRow(20);
+            }
+        }
+
+        function updateScoreInTable(score) {
+            const row = document.getElementById(`tx-${score.transactionId}`);
+            if (row) {
+                const scoreCell = row.cells[5];
+                const decisionCell = row.cells[6];
+                
+                const scorePercent = (score.fraudProbability * 100).toFixed(1);
+                scoreCell.innerHTML = `<span class="badge ${score.isFraudulent ? 'bg-danger' : 'bg-success'}">${scorePercent}%</span>`;
+                
+                const decisionBadge = score.decision === 'APPROVED' ? 'bg-success' : 
+                                    score.decision === 'DECLINED' ? 'bg-danger' : 'bg-warning';
+                decisionCell.innerHTML = `<span class="badge ${decisionBadge}">${score.decision}</span>`;
+            }
+        }
+
+        function addAlertToUI(alert) {
+            const container = document.getElementById("alertsContainer");
+            if (container.querySelector('.text-muted')) {
+                container.innerHTML = '';
+            }
+            
+            const severityClass = alert.severity === 'CRITICAL' ? 'danger' : 
+                                alert.severity === 'HIGH' ? 'warning' : 'info';
+            
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${severityClass} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                <h6 class="alert-heading">Alert: ${alert.alertType}</h6>
+                <p>Transaction: ${alert.transactionId} | User: ${alert.userId} | Amount: $${alert.amount}</p>
+                <p>Fraud Probability: ${(alert.fraudProbability * 100).toFixed(1)}%</p>
+                <small>Reasons: ${alert.reasons.join(', ')}</small>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            container.insertBefore(alertDiv, container.firstChild);
+        }
+
+        function updateStatistics() {
+            const total = transactionData.length;
+            const approved = transactionData.filter(t => t.status === 'APPROVED').length;
+            const declined = transactionData.filter(t => t.status === 'DECLINED').length;
+            const pending = transactionData.filter(t => t.status === 'PENDING').length;
+
+            document.getElementById('totalTransactions').textContent = total;
+            document.getElementById('approvedTransactions').textContent = approved;
+            document.getElementById('declinedTransactions').textContent = declined;
+            document.getElementById('pendingReview').textContent = pending;
+
+            if (total > 0) {
+                document.getElementById('successRate').textContent = ((approved / total) * 100).toFixed(1) + '%';
+                document.getElementById('fraudRate').textContent = ((declined / total) * 100).toFixed(1) + '%';
+            }
+        }
+
+        function updateCharts(score) {
+        }
+
+        function viewDetails(transactionId) {
+            window.location.href = `/Transactions/Details?id=${transactionId}`;
+        }
+
+        window.addEventListener('load', function() {
+            const ctx1 = document.getElementById('fraudTrendChart').getContext('2d');
+            fraudTrendChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Fraud Score',
+                        data: [],
+                        borderColor: 'rgb(220, 53, 69)',
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true
+                }
+            });
+
+            const ctx2 = document.getElementById('riskDistributionChart').getContext('2d');
+            riskDistributionChart = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Low Risk', 'Medium Risk', 'High Risk', 'Critical'],
+                    datasets: [{
+                        data: [0, 0, 0, 0],
+                        backgroundColor: [
+                            'rgb(25, 135, 84)',
+                            'rgb(255, 193, 7)',
+                            'rgb(255, 109, 0)',
+                            'rgb(220, 53, 69)'
+                        ]
+                    }]
+                }
+            });
+        });
+    </script>
+}

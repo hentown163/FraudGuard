@@ -1,0 +1,132 @@
+@page
+@model GlobalPaymentFraudDetection.Pages.Alerts.IndexModel
+@{
+    ViewData["Title"] = "Fraud Alerts";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1>Fraud Alerts Management</h1>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Alert Filters</h5>
+                </div>
+                <div class="card-body">
+                    <form class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Severity</label>
+                            <select class="form-select" name="severity">
+                                <option value="">All Severities</option>
+                                <option value="CRITICAL">Critical</option>
+                                <option value="HIGH">High</option>
+                                <option value="MEDIUM">Medium</option>
+                                <option value="LOW">Low</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" name="status">
+                                <option value="">All Statuses</option>
+                                <option value="PENDING">Pending</option>
+                                <option value="INVESTIGATING">Investigating</option>
+                                <option value="RESOLVED">Resolved</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Alert Type</label>
+                            <select class="form-select" name="type">
+                                <option value="">All Types</option>
+                                <option value="HIGH_RISK_TRANSACTION">High Risk Transaction</option>
+                                <option value="UNUSUAL_VELOCITY">Unusual Velocity</option>
+                                <option value="GEO_ANOMALY">Geographic Anomaly</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">&nbsp;</label>
+                            <button type="submit" class="btn btn-primary d-block w-100">Apply Filters</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Active Alerts</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Alert ID</th>
+                                    <th>Type</th>
+                                    <th>Severity</th>
+                                    <th>Transaction ID</th>
+                                    <th>Amount</th>
+                                    <th>Fraud Probability</th>
+                                    <th>Created</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>alert_001</code></td>
+                                    <td>HIGH_RISK_TRANSACTION</td>
+                                    <td><span class="badge bg-danger">CRITICAL</span></td>
+                                    <td><code>tx_abc123</code></td>
+                                    <td>$2,499.99</td>
+                                    <td><span class="badge bg-danger">95.3%</span></td>
+                                    <td>2 min ago</td>
+                                    <td><span class="badge bg-warning">PENDING</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary" onclick="investigateAlert('alert_001')">Investigate</button>
+                                        <button class="btn btn-sm btn-success" onclick="resolveAlert('alert_001')">Resolve</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><code>alert_002</code></td>
+                                    <td>UNUSUAL_VELOCITY</td>
+                                    <td><span class="badge bg-warning">HIGH</span></td>
+                                    <td><code>tx_def456</code></td>
+                                    <td>$149.99</td>
+                                    <td><span class="badge bg-warning">72.8%</span></td>
+                                    <td>15 min ago</td>
+                                    <td><span class="badge bg-info">INVESTIGATING</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary" onclick="investigateAlert('alert_002')">Investigate</button>
+                                        <button class="btn btn-sm btn-success" onclick="resolveAlert('alert_002')">Resolve</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function investigateAlert(alertId) {
+            alert('Investigating alert: ' + alertId);
+        }
+
+        function resolveAlert(alertId) {
+            if (confirm('Are you sure you want to resolve this alert?')) {
+                alert('Alert resolved: ' + alertId);
+            }
+        }
+    </script>
+}
