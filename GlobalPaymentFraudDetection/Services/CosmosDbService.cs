@@ -57,4 +57,9 @@ public class CosmosDbService : ICosmosDbService
 
         return transactions;
     }
+
+    public async Task StoreTransactionAsync(Transaction transaction)
+    {
+        await _transactionContainer.UpsertItemAsync(transaction, new PartitionKey(transaction.UserId));
+    }
 }

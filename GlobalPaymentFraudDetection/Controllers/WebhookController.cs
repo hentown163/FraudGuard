@@ -11,17 +11,20 @@ public class WebhookController : ControllerBase
 {
     private readonly IPaymentGatewayService _paymentGatewayService;
     private readonly IFraudScoringService _fraudScoringService;
+    private readonly ICosmosDbService _cosmosDbService;
     private readonly IHubContext<FraudDetectionHub> _hubContext;
     private readonly ILogger<WebhookController> _logger;
 
     public WebhookController(
         IPaymentGatewayService paymentGatewayService,
         IFraudScoringService fraudScoringService,
+        ICosmosDbService cosmosDbService,
         IHubContext<FraudDetectionHub> hubContext,
         ILogger<WebhookController> logger)
     {
         _paymentGatewayService = paymentGatewayService;
         _fraudScoringService = fraudScoringService;
+        _cosmosDbService = cosmosDbService;
         _hubContext = hubContext;
         _logger = logger;
     }
@@ -37,13 +40,15 @@ public class WebhookController : ControllerBase
             var gatewayTransaction = await _paymentGatewayService.ProcessStripeWebhookAsync(json, signature);
             var transaction = await _paymentGatewayService.MapToTransactionAsync(gatewayTransaction);
 
+            await _cosmosDbService.StoreTransactionAsync(transaction);
+
             await _hubContext.Clients.All.SendAsync("ReceiveTransactionUpdate", transaction);
 
             var fraudScore = await _fraudScoringService.ScoreTransactionAsync(transaction);
 
             await _hubContext.Clients.All.SendAsync("ReceiveScoreUpdate", fraudScore);
 
-            _logger.LogInformation("Stripe webhook processed: {TransactionId}", transaction.TransactionId);
+            _logger.LogInformation("Stripe webhook processed and persisted: {TransactionId}", transaction.TransactionId);
 
             return Ok(new { received = true });
         }
@@ -61,9 +66,20 @@ public class WebhookController : ControllerBase
         {
             var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
             var webhookId = Request.Headers["PAYPAL-TRANSMISSION-ID"].ToString();
+            
+            var headers = new Dictionary<string, string>();
+            foreach (var header in Request.Headers)
+            {
+                if (header.Key.StartsWith("PAYPAL-", StringComparison.OrdinalIgnoreCase))
+                {
+                    headers[header.Key] = header.Value.ToString();
+                }
+            }
 
-            var gatewayTransaction = await _paymentGatewayService.ProcessPayPalWebhookAsync(json, webhookId);
+            var gatewayTransaction = await _paymentGatewayService.ProcessPayPalWebhookAsync(json, webhookId, headers);
             var transaction = await _paymentGatewayService.MapToTransactionAsync(gatewayTransaction);
+
+            await _cosmosDbService.StoreTransactionAsync(transaction);
 
             await _hubContext.Clients.All.SendAsync("ReceiveTransactionUpdate", transaction);
 
@@ -71,7 +87,7 @@ public class WebhookController : ControllerBase
 
             await _hubContext.Clients.All.SendAsync("ReceiveScoreUpdate", fraudScore);
 
-            _logger.LogInformation("PayPal webhook processed: {TransactionId}", transaction.TransactionId);
+            _logger.LogInformation("PayPal webhook processed and persisted: {TransactionId}", transaction.TransactionId);
 
             return Ok(new { received = true });
         }
