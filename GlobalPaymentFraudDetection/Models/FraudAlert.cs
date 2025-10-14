@@ -10,7 +10,7 @@ public class FraudAlert
     public string AlertType { get; set; } = string.Empty;
     public string Severity { get; set; } = "MEDIUM";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public string Status { get; set; } = "PENDING";
+    public string Status { get; set; } = "UNRESOLVED";
     public string AssignedTo { get; set; } = string.Empty;
     public string Resolution { get; set; } = string.Empty;
     public DateTime? ResolvedAt { get; set; }

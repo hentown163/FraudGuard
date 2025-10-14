@@ -8,6 +8,7 @@ public class Transaction
     public string Currency { get; set; } = "USD";
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
     public string IpAddress { get; set; } = string.Empty;
+    public string IPAddress => IpAddress;
     public string DeviceId { get; set; } = string.Empty;
     public string MerchantId { get; set; } = string.Empty;
     public string PaymentGateway { get; set; } = string.Empty;
@@ -20,5 +21,7 @@ public class Transaction
     public string DeviceType { get; set; } = string.Empty;
     public string Browser { get; set; } = string.Empty;
     public string OperatingSystem { get; set; } = string.Empty;
+    public bool IsFraudulent { get; set; }
+    public double FraudScore { get; set; }
     public Dictionary<string, string> Metadata { get; set; } = new();
 }

@@ -1,4 +1,4 @@
-modules = ["dotnet-7.0", "web", "nodejs-20"]
+modules = ["dotnet-7.0", "web", "nodejs-20", "dotnet-8.0"]
 [agent]
 expertMode = true
 
@@ -29,10 +29,6 @@ outputType = "webview"
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 42709
-externalPort = 3000
 
 [nix]
 channel = "stable-25_05"

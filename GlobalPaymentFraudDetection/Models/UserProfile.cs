@@ -17,4 +17,6 @@ public class UserProfile
     public int DeclinedTransactions { get; set; }
     public int ChargebackCount { get; set; }
     public double VelocityScore { get; set; }
+    public double RiskScore { get; set; }
+    public bool IsBlacklisted { get; set; }
 }

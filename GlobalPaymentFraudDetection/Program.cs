@@ -1,14 +1,19 @@
 using GlobalPaymentFraudDetection.Services;
 using GlobalPaymentFraudDetection.Hubs;
+using GlobalPaymentFraudDetection.Infrastructure;
+using GlobalPaymentFraudDetection.Middleware;
 using Microsoft.Azure.Cosmos;
 using Azure.Messaging.ServiceBus;
 using Stripe;
+using System.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorPages();
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
+
+builder.Services.AddMemoryCache();
 
 builder.Services.AddSingleton<CosmosClient>(sp =>
 {
@@ -24,14 +29,28 @@ builder.Services.AddSingleton<ServiceBusClient>(sp =>
     return new ServiceBusClient(connectionString ?? "Endpoint=sb://localhost");
 });
 
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
 builder.Services.AddScoped<IKeyVaultService, KeyVaultService>();
 builder.Services.AddScoped<ICosmosDbService, CosmosDbService>();
 builder.Services.AddScoped<IServiceBusService, ServiceBusService>();
 builder.Services.AddScoped<IBehavioralAnalysisService, BehavioralAnalysisService>();
 builder.Services.AddScoped<IOnnxModelService, OnnxModelService>();
 builder.Services.AddScoped<IPaymentGatewayService, PaymentGatewayService>();
-builder.Services.AddScoped<IFraudScoringService, FraudScoringService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+
+builder.Services.AddScoped<IAdvancedRiskScoringService, AdvancedRiskScoringService>();
+builder.Services.AddScoped<IEnsembleModelService, EnsembleModelService>();
+builder.Services.AddScoped<IFraudRulesEngine, FraudRulesEngine>();
+builder.Services.AddScoped<IFraudScoringService, FraudScoringService>();
+
+ActivitySource.AddActivityListener(new ActivityListener
+{
+    ShouldListenTo = source => source.Name == DistributedTracing.ServiceName,
+    Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllData,
+    ActivityStarted = activity => Console.WriteLine($"Activity Started: {activity.DisplayName}"),
+    ActivityStopped = activity => Console.WriteLine($"Activity Stopped: {activity.DisplayName} ({activity.Duration.TotalMilliseconds}ms)")
+});
 
 StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"] ?? Environment.GetEnvironmentVariable("STRIPE_SECRET_KEY") ?? "sk_test_placeholder";
 
@@ -42,6 +61,8 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
+
+app.UseMiddleware<IdempotencyMiddleware>();
 
 app.UseStaticFiles();
 app.UseRouting();
