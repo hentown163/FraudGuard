@@ -62,7 +62,7 @@ public class PaymentGatewayService : IPaymentGatewayService
         throw new InvalidOperationException($"Unsupported event type: {stripeEvent.Type}");
     }
 
-    public async Task<PaymentGatewayTransaction> ProcessPayPalWebhookAsync(string payload, string webhookId, Dictionary<string, string> headers)
+    public async Task<PaymentGatewayTransaction> ProcessPayPalWebhookAsync(string payload, Dictionary<string, string> headers)
     {
         var isValid = await VerifyPayPalWebhookSignatureAsync(payload, headers);
         if (!isValid)
@@ -78,6 +78,7 @@ public class PaymentGatewayService : IPaymentGatewayService
         if (webhookData.EventType == "PAYMENT.CAPTURE.COMPLETED")
         {
             var resource = webhookData.Resource as dynamic;
+            var webhookId = await _keyVaultService.GetSecretAsync("PayPalWebhookId");
             
             return new PaymentGatewayTransaction
             {
@@ -87,9 +88,12 @@ public class PaymentGatewayService : IPaymentGatewayService
                 Amount = decimal.Parse(resource?.amount?.value?.ToString() ?? "0"),
                 Currency = resource?.amount?.currency_code?.ToString() ?? "USD",
                 Status = resource?.status?.ToString() ?? "unknown",
-                PaymentMethodId = webhookId,
+                PaymentMethodId = resource?.id?.ToString() ?? webhookData.Id,
                 PaymentMethodType = "paypal",
-                RawData = new Dictionary<string, object> { { "event", webhookData } },
+                RawData = new Dictionary<string, object> { 
+                    { "event", webhookData },
+                    { "webhook_id", webhookId }
+                },
                 CreatedAt = webhookData.CreateTime
             };
         }
@@ -110,8 +114,62 @@ public class PaymentGatewayService : IPaymentGatewayService
                 return false;
             }
 
-            var webhookSecret = await _keyVaultService.GetSecretAsync("PayPalWebhookId");
+            var certUrl = headers["PAYPAL-CERT-URL"];
+            if (!Uri.TryCreate(certUrl, UriKind.Absolute, out var certUri))
+            {
+                _logger.LogWarning("PayPal certificate URL is invalid: {CertUrl}", certUrl);
+                return false;
+            }
+
+            var trustedHosts = new[] { "api.paypal.com", "api-m.paypal.com", "api.sandbox.paypal.com", "api-m.sandbox.paypal.com" };
+            if (!trustedHosts.Contains(certUri.Host, StringComparer.OrdinalIgnoreCase))
+            {
+                _logger.LogWarning("PayPal certificate URL is not from a trusted PayPal domain: {CertUrl}", certUrl);
+                return false;
+            }
+
+            var authAlgo = headers.GetValueOrDefault("PAYPAL-AUTH-ALGO", "SHA256withRSA");
+            if (authAlgo != "SHA256withRSA")
+            {
+                _logger.LogWarning("Unsupported PayPal auth algorithm: {AuthAlgo}", authAlgo);
+                return false;
+            }
+
+            var webhookId = await _keyVaultService.GetSecretAsync("PayPalWebhookId");
+            var paypalClientId = await _keyVaultService.GetSecretAsync("PayPalClientId");
+            var paypalSecret = await _keyVaultService.GetSecretAsync("PayPalSecret");
+            var paypalMode = await _keyVaultService.GetSecretAsync("PayPalMode");
             
+            var baseUrl = paypalMode?.ToLower() == "live" 
+                ? "https://api-m.paypal.com" 
+                : "https://api-m.sandbox.paypal.com";
+
+            using var httpClient = new HttpClient();
+            
+            var authToken = Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes($"{paypalClientId}:{paypalSecret}"));
+            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authToken);
+            
+            var tokenResponse = await httpClient.PostAsync(
+                $"{baseUrl}/v1/oauth2/token",
+                new FormUrlEncodedContent(new[] { new KeyValuePair<string, string>("grant_type", "client_credentials") })
+            );
+
+            if (!tokenResponse.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("PayPal OAuth token request failed: {StatusCode}", tokenResponse.StatusCode);
+                return false;
+            }
+
+            var tokenContent = await tokenResponse.Content.ReadAsStringAsync();
+            var tokenData = JsonConvert.DeserializeObject<Dictionary<string, object>>(tokenContent);
+            var accessToken = tokenData?.GetValueOrDefault("access_token")?.ToString();
+
+            if (string.IsNullOrEmpty(accessToken))
+            {
+                _logger.LogWarning("PayPal OAuth token not found in response");
+                return false;
+            }
+
             var verificationPayload = new
             {
                 transmission_id = headers["PAYPAL-TRANSMISSION-ID"],
@@ -119,9 +177,35 @@ public class PaymentGatewayService : IPaymentGatewayService
                 cert_url = headers["PAYPAL-CERT-URL"],
                 auth_algo = headers.GetValueOrDefault("PAYPAL-AUTH-ALGO", "SHA256withRSA"),
                 transmission_sig = headers["PAYPAL-TRANSMISSION-SIG"],
-                webhook_id = webhookSecret,
+                webhook_id = webhookId,
                 webhook_event = JsonConvert.DeserializeObject(payload)
             };
+
+            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+            
+            var verifyContent = new StringContent(
+                JsonConvert.SerializeObject(verificationPayload),
+                System.Text.Encoding.UTF8,
+                "application/json"
+            );
+
+            var response = await httpClient.PostAsync($"{baseUrl}/v1/notifications/verify-webhook-signature", verifyContent);
+            var responseContent = await response.Content.ReadAsStringAsync();
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("PayPal webhook verification API failed: {StatusCode} - {Content}", response.StatusCode, responseContent);
+                return false;
+            }
+
+            var verificationResult = JsonConvert.DeserializeObject<Dictionary<string, object>>(responseContent);
+            var verificationStatus = verificationResult?.GetValueOrDefault("verification_status")?.ToString() ?? string.Empty;
+
+            if (verificationStatus != "SUCCESS")
+            {
+                _logger.LogWarning("PayPal webhook signature verification failed: {Status}", verificationStatus);
+                return false;
+            }
 
             _logger.LogInformation("PayPal webhook signature verified successfully");
             return true;

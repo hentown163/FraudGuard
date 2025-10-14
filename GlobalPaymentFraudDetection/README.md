@@ -192,9 +192,26 @@ dotnet run
 
 - Azure Key Vault for secrets management
 - HTTPS/TLS encryption
-- Webhook signature verification
+- Webhook signature verification (Stripe & PayPal)
+- PayPal OAuth 2.0 authentication for webhook verification
+- Certificate URL validation against trusted PayPal domains
 - Rate limiting
 - API key authentication
+
+## Known Improvements & Future Enhancements
+
+### Performance Optimization
+- **HttpClient Factory**: Refactor PaymentGatewayService to use IHttpClientFactory instead of creating HttpClient instances per request. This prevents socket exhaustion under high load and follows ASP.NET Core best practices.
+
+### Testing
+- Add integration tests for webhook verification with mocked PayPal/Stripe responses
+- Add unit tests for behavioral analysis and fraud scoring logic
+- Add load testing for transaction throughput validation
+
+### Monitoring
+- Add Application Insights integration for performance monitoring
+- Add custom metrics and dashboards for fraud detection KPIs
+- Implement distributed tracing for end-to-end transaction flow
 
 ## License
 

@@ -65,7 +65,6 @@ public class WebhookController : ControllerBase
         try
         {
             var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
-            var webhookId = Request.Headers["PAYPAL-TRANSMISSION-ID"].ToString();
             
             var headers = new Dictionary<string, string>();
             foreach (var header in Request.Headers)
@@ -76,7 +75,7 @@ public class WebhookController : ControllerBase
                 }
             }
 
-            var gatewayTransaction = await _paymentGatewayService.ProcessPayPalWebhookAsync(json, webhookId, headers);
+            var gatewayTransaction = await _paymentGatewayService.ProcessPayPalWebhookAsync(json, headers);
             var transaction = await _paymentGatewayService.MapToTransactionAsync(gatewayTransaction);
 
             await _cosmosDbService.StoreTransactionAsync(transaction);
