@@ -95,3 +95,4 @@
 /home/runner/workspace/GlobalPaymentFraudDetection/obj/Debug/net8.0/GlobalPaymentFraudDetection.pdb
 /home/runner/workspace/GlobalPaymentFraudDetection/obj/Debug/net8.0/GlobalPaymentFraudDetection.genruntimeconfig.cache
 /home/runner/workspace/GlobalPaymentFraudDetection/obj/Debug/net8.0/ref/GlobalPaymentFraudDetection.dll
+/home/runner/workspace/GlobalPaymentFraudDetection/obj/Debug/net8.0/GlobalPaymentFraudDetection.sourcelink.json
