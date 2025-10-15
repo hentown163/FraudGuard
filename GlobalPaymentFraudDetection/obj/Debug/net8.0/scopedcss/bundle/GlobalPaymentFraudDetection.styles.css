@@ -41,9 +41,8 @@ button.accept-policy[b-6tug74zhek] {
 }
 
 .footer[b-6tug74zhek] {
-  position: absolute;
-  bottom: 0;
+  position: relative;
   width: 100%;
-  white-space: nowrap;
-  line-height: 60px;
+  white-space: normal;
+  line-height: 1.6;
 }
