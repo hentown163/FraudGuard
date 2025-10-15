@@ -7,45 +7,60 @@
 <div class="container-fluid">
     <div class="row mb-4">
         <div class="col-12">
-            <h1 class="mb-3">Global Payment Fraud Detection Dashboard</h1>
+            <div class="page-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h1>Fraud Detection Dashboard</h1>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item active">Dashboard</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="d-flex gap-2">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="bi bi-download"></i> Export
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="exportToCSV(); return false;"><i class="bi bi-file-earmark-text"></i> Export as CSV</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="exportToPDF(); return false;"><i class="bi bi-file-earmark-pdf"></i> Export as PDF</a></li>
+                        </ul>
+                    </div>
+                    <button class="btn btn-primary" onclick="location.reload()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card text-white bg-primary">
-                <div class="card-body">
-                    <h5 class="card-title">Total Transactions</h5>
-                    <h2 id="totalTransactions">0</h2>
-                    <p class="card-text">Last 24 Hours</p>
-                </div>
+    <div class="row mb-4 g-3">
+        <div class="col-md-3 col-sm-6 fade-in">
+            <div class="stat-card stat-card-primary">
+                <h5 class="card-title">Total Transactions</h5>
+                <h2 id="totalTransactions">0</h2>
+                <p class="card-text">Last 24 Hours</p>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card text-white bg-success">
-                <div class="card-body">
-                    <h5 class="card-title">Approved</h5>
-                    <h2 id="approvedTransactions">0</h2>
-                    <p class="card-text">Success Rate: <span id="successRate">0%</span></p>
-                </div>
+        <div class="col-md-3 col-sm-6 fade-in" style="animation-delay: 0.1s;">
+            <div class="stat-card stat-card-success">
+                <h5 class="card-title">Approved</h5>
+                <h2 id="approvedTransactions">0</h2>
+                <p class="card-text">Success Rate: <span id="successRate">0%</span></p>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card text-white bg-danger">
-                <div class="card-body">
-                    <h5 class="card-title">Declined (Fraud)</h5>
-                    <h2 id="declinedTransactions">0</h2>
-                    <p class="card-text">Fraud Rate: <span id="fraudRate">0%</span></p>
-                </div>
+        <div class="col-md-3 col-sm-6 fade-in" style="animation-delay: 0.2s;">
+            <div class="stat-card stat-card-danger">
+                <h5 class="card-title">Declined (Fraud)</h5>
+                <h2 id="declinedTransactions">0</h2>
+                <p class="card-text">Fraud Rate: <span id="fraudRate">0%</span></p>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card text-white bg-warning">
-                <div class="card-body">
-                    <h5 class="card-title">Pending Review</h5>
-                    <h2 id="pendingReview">0</h2>
-                    <p class="card-text">Manual Review Required</p>
-                </div>
+        <div class="col-md-3 col-sm-6 fade-in" style="animation-delay: 0.3s;">
+            <div class="stat-card stat-card-warning">
+                <h5 class="card-title">Pending Review</h5>
+                <h2 id="pendingReview">0</h2>
+                <p class="card-text">Manual Review Required</p>
             </div>
         </div>
     </div>
@@ -77,10 +92,34 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5>Real-Time Transaction Stream</h5>
-                    <span class="badge bg-success" id="connectionStatus">Connected</span>
+                    <h5 class="mb-0">Real-Time Transaction Stream</h5>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="status-indicator online" id="statusIndicator"></span>
+                        <span class="badge bg-success" id="connectionStatus">Connected</span>
+                    </div>
                 </div>
                 <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="search-box">
+                                <i class="bi bi-search"></i>
+                                <input type="text" id="searchTransactions" class="form-control" placeholder="Search transactions by ID, user, or amount...">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex gap-2 justify-content-end">
+                                <input type="date" id="dateFrom" class="form-control" style="max-width: 200px;" title="From Date">
+                                <input type="date" id="dateTo" class="form-control" style="max-width: 200px;" title="To Date">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="filter-pills mb-3">
+                        <span class="filter-pill active" data-filter="all">All</span>
+                        <span class="filter-pill" data-filter="APPROVED">Approved</span>
+                        <span class="filter-pill" data-filter="DECLINED">Declined</span>
+                        <span class="filter-pill" data-filter="PENDING">Pending</span>
+                        <span class="filter-pill" data-filter="high-risk">High Risk</span>
+                    </div>
                     <div class="table-responsive">
                         <table class="table table-hover" id="transactionTable">
                             <thead>
@@ -123,6 +162,8 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <script>
         const connection = new signalR.HubConnectionBuilder()
             .withUrl("/fraudhub")
@@ -230,12 +271,208 @@
             }
         }
 
+        let chartDataPoints = [];
+        let riskCounts = { low: 0, medium: 0, high: 0, critical: 0 };
+
         function updateCharts(score) {
+            const timestamp = new Date().toLocaleTimeString();
+            chartDataPoints.push({ time: timestamp, score: score.fraudProbability });
+            
+            if (chartDataPoints.length > 20) {
+                chartDataPoints.shift();
+            }
+            
+            if (fraudTrendChart) {
+                fraudTrendChart.data.labels = chartDataPoints.map(d => d.time);
+                fraudTrendChart.data.datasets[0].data = chartDataPoints.map(d => d.score);
+                fraudTrendChart.update();
+            }
+            
+            if (score.fraudProbability < 0.3) riskCounts.low++;
+            else if (score.fraudProbability < 0.6) riskCounts.medium++;
+            else if (score.fraudProbability < 0.8) riskCounts.high++;
+            else riskCounts.critical++;
+            
+            if (riskDistributionChart) {
+                riskDistributionChart.data.datasets[0].data = [
+                    riskCounts.low,
+                    riskCounts.medium,
+                    riskCounts.high,
+                    riskCounts.critical
+                ];
+                riskDistributionChart.update();
+            }
         }
 
         function viewDetails(transactionId) {
             window.location.href = `/Transactions/Details?id=${transactionId}`;
         }
+
+        function exportToCSV() {
+            const table = document.getElementById('transactionTable');
+            const rows = table.querySelectorAll('tr');
+            const csv = [];
+            
+            for (let i = 0; i < rows.length; i++) {
+                const row = [], cols = rows[i].querySelectorAll('td, th');
+                
+                for (let j = 0; j < cols.length - 1; j++) {
+                    let data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, '').replace(/(\s\s)/gm, ' ');
+                    data = data.replace(/"/g, '""');
+                    row.push('"' + data + '"');
+                }
+                
+                csv.push(row.join(','));
+            }
+            
+            const csvFile = new Blob([csv.join('\n')], { type: 'text/csv' });
+            const downloadLink = document.createElement('a');
+            downloadLink.download = `fraud-transactions-${new Date().toISOString().split('T')[0]}.csv`;
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = 'none';
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            showToast('CSV export completed successfully', 'success');
+        }
+
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'mm', 'a4');
+            
+            const pageWidth = doc.internal.pageSize.getWidth();
+            
+            doc.setFontSize(18);
+            doc.setTextColor(79, 70, 229);
+            doc.text('Fraud Detection Dashboard - Transaction Report', 14, 15);
+            
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
+            
+            const stats = {
+                total: document.getElementById('totalTransactions').textContent,
+                approved: document.getElementById('approvedTransactions').textContent,
+                declined: document.getElementById('declinedTransactions').textContent,
+                pending: document.getElementById('pendingReview').textContent,
+                successRate: document.getElementById('successRate').textContent,
+                fraudRate: document.getElementById('fraudRate').textContent
+            };
+            
+            doc.setFontSize(11);
+            doc.setTextColor(0);
+            doc.text(`Summary: Total: ${stats.total} | Approved: ${stats.approved} (${stats.successRate}) | Declined: ${stats.declined} (${stats.fraudRate}) | Pending: ${stats.pending}`, 14, 29);
+            
+            const table = document.getElementById('transactionTable');
+            const headers = [];
+            const headerCells = table.querySelectorAll('thead th');
+            for (let i = 0; i < headerCells.length - 1; i++) {
+                headers.push(headerCells[i].innerText);
+            }
+            
+            const rows = [];
+            const bodyRows = table.querySelectorAll('tbody tr');
+            bodyRows.forEach(row => {
+                if (row.style.display !== 'none') {
+                    const rowData = [];
+                    const cells = row.querySelectorAll('td');
+                    for (let i = 0; i < cells.length - 1; i++) {
+                        rowData.push(cells[i].innerText.trim());
+                    }
+                    rows.push(rowData);
+                }
+            });
+            
+            doc.autoTable({
+                head: [headers],
+                body: rows,
+                startY: 35,
+                theme: 'striped',
+                headStyles: { fillColor: [79, 70, 229] },
+                styles: { fontSize: 8, cellPadding: 2 },
+                margin: { left: 14, right: 14 }
+            });
+            
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.setTextColor(150);
+                doc.text(
+                    `Page ${i} of ${pageCount}`,
+                    pageWidth / 2,
+                    doc.internal.pageSize.getHeight() - 10,
+                    { align: 'center' }
+                );
+            }
+            
+            doc.save(`fraud-transactions-${new Date().toISOString().split('T')[0]}.pdf`);
+            showToast('PDF export completed successfully', 'success');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchTransactions');
+            const dateFrom = document.getElementById('dateFrom');
+            const dateTo = document.getElementById('dateTo');
+            const filterPills = document.querySelectorAll('.filter-pill');
+            
+            let currentFilter = 'all';
+            
+            if (searchInput) {
+                searchInput.addEventListener('input', filterTransactions);
+            }
+            
+            if (dateFrom) {
+                dateFrom.addEventListener('change', filterTransactions);
+            }
+            
+            if (dateTo) {
+                dateTo.addEventListener('change', filterTransactions);
+            }
+            
+            filterPills.forEach(pill => {
+                pill.addEventListener('click', function() {
+                    filterPills.forEach(p => p.classList.remove('active'));
+                    this.classList.add('active');
+                    currentFilter = this.dataset.filter;
+                    filterTransactions();
+                });
+            });
+            
+            function filterTransactions() {
+                const searchTerm = searchInput?.value.toLowerCase() || '';
+                const fromDate = dateFrom?.value ? new Date(dateFrom.value) : null;
+                const toDate = dateTo?.value ? new Date(dateTo.value) : null;
+                
+                const rows = document.querySelectorAll('#transactionTableBody tr');
+                let visibleCount = 0;
+                
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    const matchesSearch = !searchTerm || text.includes(searchTerm);
+                    
+                    const decision = row.querySelector('.badge.bg-success, .badge.bg-danger, .badge.bg-warning');
+                    const decisionText = decision?.textContent.trim();
+                    let matchesFilter = currentFilter === 'all';
+                    
+                    if (currentFilter === 'APPROVED') matchesFilter = decisionText === 'APPROVED';
+                    else if (currentFilter === 'DECLINED') matchesFilter = decisionText === 'DECLINED';
+                    else if (currentFilter === 'PENDING') matchesFilter = decisionText === 'PENDING' || decisionText === 'Processing...';
+                    else if (currentFilter === 'high-risk') {
+                        const scoreText = row.cells[5]?.textContent;
+                        const score = parseFloat(scoreText);
+                        matchesFilter = score > 70;
+                    }
+                    
+                    if (matchesSearch && matchesFilter) {
+                        row.style.display = '';
+                        visibleCount++;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            }
+        });
 
         window.addEventListener('load', function() {
             const ctx1 = document.getElementById('fraudTrendChart').getContext('2d');

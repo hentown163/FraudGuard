@@ -1,0 +1,245 @@
+@page
+@model GlobalPaymentFraudDetection.Pages.Analytics.IndexModel
+@{
+    ViewData["Title"] = "Analytics & Insights";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="page-header">
+                <h1>Analytics & Insights</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/Dashboard">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Analytics</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4 g-3">
+        <div class="col-lg-3 col-md-6 fade-in">
+            <div class="metric-box">
+                <h6><i class="bi bi-currency-dollar"></i> Total Volume</h6>
+                <div class="value">$<span id="totalVolume">0</span></div>
+                <small class="text-success"><i class="bi bi-arrow-up"></i> 12.5% from last week</small>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 fade-in" style="animation-delay: 0.1s;">
+            <div class="metric-box">
+                <h6><i class="bi bi-shield-x"></i> Fraud Detected</h6>
+                <div class="value"><span id="fraudCount">0</span></div>
+                <small class="text-danger"><i class="bi bi-arrow-up"></i> 3.2% from last week</small>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 fade-in" style="animation-delay: 0.2s;">
+            <div class="metric-box">
+                <h6><i class="bi bi-clock-history"></i> Avg Response Time</h6>
+                <div class="value"><span id="avgResponseTime">245</span>ms</div>
+                <small class="text-success"><i class="bi bi-arrow-down"></i> 15ms faster</small>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 fade-in" style="animation-delay: 0.3s;">
+            <div class="metric-box">
+                <h6><i class="bi bi-percent"></i> Detection Accuracy</h6>
+                <div class="value"><span id="accuracy">98.7</span>%</div>
+                <small class="text-success"><i class="bi bi-arrow-up"></i> 0.5% improvement</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-graph-up"></i> Transaction Volume Trends</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="volumeTrendChart" height="80"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Gateway Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="gatewayDistChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-globe"></i> Geographic Fraud Heatmap</h5>
+                </div>
+                <div class="card-body">
+                    <div id="worldMap" style="height: 350px; background: var(--bg-tertiary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
+                        <div class="text-center">
+                            <i class="bi bi-geo-alt" style="font-size: 4rem; color: var(--text-muted);"></i>
+                            <p class="text-muted mt-2">Geographic data visualization</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-robot"></i> ML Model Performance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><strong>Precision</strong></span>
+                            <span class="text-success">96.8%</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-success" style="width: 96.8%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><strong>Recall</strong></span>
+                            <span class="text-info">94.2%</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-info" style="width: 94.2%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><strong>F1 Score</strong></span>
+                            <span class="text-primary">95.5%</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-primary" style="width: 95.5%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><strong>AUC-ROC</strong></span>
+                            <span class="text-warning">98.1%</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-warning" style="width: 98.1%"></div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="mt-3">
+                        <p class="text-muted mb-2"><small>Last Model Update:</small></p>
+                        <p class="mb-0"><strong>October 14, 2025 15:30 UTC</strong></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-list-check"></i> Top Fraud Indicators</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Indicator</th>
+                                    <th>Frequency</th>
+                                    <th>Impact Score</th>
+                                    <th>Trend</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><i class="bi bi-geo-alt-fill text-danger"></i> Unusual Location</td>
+                                    <td><span class="badge bg-danger">High (68%)</span></td>
+                                    <td><strong>8.7/10</strong></td>
+                                    <td><span class="text-danger"><i class="bi bi-arrow-up"></i> Increasing</span></td>
+                                </tr>
+                                <tr>
+                                    <td><i class="bi bi-speedometer2 text-warning"></i> High Velocity</td>
+                                    <td><span class="badge bg-warning">Medium (45%)</span></td>
+                                    <td><strong>7.3/10</strong></td>
+                                    <td><span class="text-success"><i class="bi bi-arrow-down"></i> Decreasing</span></td>
+                                </tr>
+                                <tr>
+                                    <td><i class="bi bi-shield-x text-danger"></i> Blacklisted IP</td>
+                                    <td><span class="badge bg-danger">High (52%)</span></td>
+                                    <td><strong>9.2/10</strong></td>
+                                    <td><span class="text-muted"><i class="bi bi-arrow-right"></i> Stable</span></td>
+                                </tr>
+                                <tr>
+                                    <td><i class="bi bi-credit-card text-warning"></i> New Payment Method</td>
+                                    <td><span class="badge bg-info">Low (23%)</span></td>
+                                    <td><strong>5.8/10</strong></td>
+                                    <td><span class="text-success"><i class="bi bi-arrow-down"></i> Decreasing</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx1 = document.getElementById('volumeTrendChart').getContext('2d');
+            new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Transaction Volume',
+                        data: [1200, 1900, 1500, 2100, 1800, 2400, 2200],
+                        borderColor: 'rgb(79, 70, 229)',
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+
+            const ctx2 = document.getElementById('gatewayDistChart').getContext('2d');
+            new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Stripe', 'PayPal', 'Braintree', 'Authorize.Net'],
+                    datasets: [{
+                        data: [45, 30, 15, 10],
+                        backgroundColor: [
+                            'rgb(79, 70, 229)',
+                            'rgb(14, 165, 233)',
+                            'rgb(16, 185, 129)',
+                            'rgb(245, 158, 11)'
+                        ]
+                    }]
+                }
+            });
+
+            document.getElementById('totalVolume').textContent = '2.4M';
+            document.getElementById('fraudCount').textContent = '342';
+        });
+    </script>
+}

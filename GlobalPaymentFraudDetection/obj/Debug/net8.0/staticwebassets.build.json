@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "F0lO4Hpl0xA0kp7uGDpNE9TNy9PEsdjPbnRu8LKUzTw=",
+  "Hash": "Rs6BOoHv8XpecZ3y7XVCBmiv9Hlym+Qod2IiHF+z3IM=",
   "Source": "GlobalPaymentFraudDetection",
   "BasePath": "_content/GlobalPaymentFraudDetection",
   "Mode": "Default",
@@ -53,6 +53,25 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "/home/runner/workspace/GlobalPaymentFraudDetection/obj/Debug/net8.0/scopedcss/projectbundle/GlobalPaymentFraudDetection.bundle.scp.css"
+    },
+    {
+      "Identity": "/home/runner/workspace/GlobalPaymentFraudDetection/wwwroot/css/professional-theme.css",
+      "SourceId": "GlobalPaymentFraudDetection",
+      "SourceType": "Discovered",
+      "ContentRoot": "/home/runner/workspace/GlobalPaymentFraudDetection/wwwroot/",
+      "BasePath": "_content/GlobalPaymentFraudDetection",
+      "RelativePath": "css/professional-theme.css",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot/css/professional-theme.css"
     },
     {
       "Identity": "/home/runner/workspace/GlobalPaymentFraudDetection/wwwroot/css/site.css",

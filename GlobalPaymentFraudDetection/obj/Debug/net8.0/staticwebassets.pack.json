@@ -5,6 +5,10 @@
       "PackagePath": "staticwebassets/GlobalPaymentFraudDetection.bundle.scp.css"
     },
     {
+      "Id": "/home/runner/workspace/GlobalPaymentFraudDetection/wwwroot/css/professional-theme.css",
+      "PackagePath": "staticwebassets/css/professional-theme.css"
+    },
+    {
       "Id": "/home/runner/workspace/GlobalPaymentFraudDetection/wwwroot/css/site.css",
       "PackagePath": "staticwebassets/css/site.css"
     },

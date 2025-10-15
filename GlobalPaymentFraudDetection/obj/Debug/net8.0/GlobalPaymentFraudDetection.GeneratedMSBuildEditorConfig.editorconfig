@@ -10,7 +10,9 @@ build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = GlobalPaymentFraudDetection
 build_property.RootNamespace = GlobalPaymentFraudDetection
 build_property.ProjectDir = /home/runner/workspace/GlobalPaymentFraudDetection/
-build_property.RazorLangVersion = 7.0
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.RazorLangVersion = 8.0
 build_property.SupportLocalizedComponentNames = 
 build_property.GenerateRazorMetadataSourceChecksumAttributes = 
 build_property.MSBuildProjectDirectory = /home/runner/workspace/GlobalPaymentFraudDetection
@@ -18,6 +20,10 @@ build_property._RazorSourceGeneratorDebug =
 
 [/home/runner/workspace/GlobalPaymentFraudDetection/Pages/Alerts/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQWxlcnRzL0luZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/runner/workspace/GlobalPaymentFraudDetection/Pages/Analytics/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQW5hbHl0aWNzL0luZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [/home/runner/workspace/GlobalPaymentFraudDetection/Pages/Dashboard/Index.cshtml]
@@ -34,6 +40,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [/home/runner/workspace/GlobalPaymentFraudDetection/Pages/Privacy.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXMvUHJpdmFjeS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/runner/workspace/GlobalPaymentFraudDetection/Pages/Settings/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvU2V0dGluZ3MvSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [/home/runner/workspace/GlobalPaymentFraudDetection/Pages/Shared/_ValidationScriptsPartial.cshtml]
