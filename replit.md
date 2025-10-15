@@ -113,16 +113,26 @@ Enterprise-grade payment fraud detection system with real-time transaction monit
 - Twilio credentials
 - Stripe/PayPal API keys
 
-## Project Structure
+## Project Structure (Reorganized - October 2025)
+
+### Clean Architecture Layers
+- `/Core` - Business logic layer with proper separation of concerns
+  - `/Core/Interfaces/Services` - Service interface definitions
+  - `/Core/Interfaces/Repositories` - Repository interface definitions
+  - `/Core/Services` - Service implementations (fraud detection, payment gateways, notifications)
+  - `/Core/Repositories` - Data access layer implementations
 - `/Controllers` - API controllers
 - `/Hubs` - SignalR hubs for real-time communication
-- `/Infrastructure` - Core services and utilities
-- `/Middleware` - Custom middleware components
+- `/Infrastructure` - Core infrastructure services and Unit of Work pattern
+- `/Middleware` - Custom middleware components (Rate Limiting, Request Logging, Exception Handling)
 - `/Models` - Data models and DTOs
 - `/Pages` - Razor Pages (Dashboard, Analytics, Settings, Alerts, Transactions)
-- `/Repositories` - Data access layer
-- `/Services` - Business logic (fraud detection, payment gateways, notifications)
 - `/wwwroot` - Static assets (CSS, JS, images)
+
+### Custom Middlewares (Production-Ready)
+1. **ExceptionHandlingMiddleware** - Global error handling with environment-aware diagnostics
+2. **RequestLoggingMiddleware** - Request/response logging with unique request IDs and performance tracking
+3. **RateLimitingMiddleware** - Thread-safe rate limiting with sliding window (100 req/min per IP/endpoint)
 
 ## Features Summary
 ✅ Real-time fraud detection with ML models
