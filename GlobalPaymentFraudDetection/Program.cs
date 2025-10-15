@@ -42,6 +42,7 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IAdvancedRiskScoringService, AdvancedRiskScoringService>();
 builder.Services.AddScoped<IEnsembleModelService, EnsembleModelService>();
 builder.Services.AddScoped<IFraudRulesEngine, FraudRulesEngine>();
+builder.Services.AddScoped<ISiftScienceService, SiftScienceService>();
 builder.Services.AddScoped<IFraudScoringService, FraudScoringService>();
 
 ActivitySource.AddActivityListener(new ActivityListener

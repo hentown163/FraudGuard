@@ -12,6 +12,7 @@ public class FraudScoringService : IFraudScoringService
     private readonly IBehavioralAnalysisService _behavioralAnalysisService;
     private readonly IAdvancedRiskScoringService _advancedRiskScoringService;
     private readonly IFraudRulesEngine _fraudRulesEngine;
+    private readonly ISiftScienceService _siftScienceService;
     private readonly ILogger<FraudScoringService> _logger;
     private readonly IConfiguration _configuration;
 
@@ -22,6 +23,7 @@ public class FraudScoringService : IFraudScoringService
         IBehavioralAnalysisService behavioralAnalysisService,
         IAdvancedRiskScoringService advancedRiskScoringService,
         IFraudRulesEngine fraudRulesEngine,
+        ISiftScienceService siftScienceService,
         ILogger<FraudScoringService> logger,
         IConfiguration configuration)
     {
@@ -31,6 +33,7 @@ public class FraudScoringService : IFraudScoringService
         _behavioralAnalysisService = behavioralAnalysisService;
         _advancedRiskScoringService = advancedRiskScoringService;
         _fraudRulesEngine = fraudRulesEngine;
+        _siftScienceService = siftScienceService;
         _logger = logger;
         _configuration = configuration;
     }
@@ -78,6 +81,14 @@ public class FraudScoringService : IFraudScoringService
             
             var ruleViolations = await _fraudRulesEngine.EvaluateRulesAsync(transaction, userProfile);
 
+            var siftScienceResponse = await _siftScienceService.ScoreTransactionAsync(transaction);
+            var siftScore = siftScienceResponse.Score;
+            
+            if (siftScienceResponse.Status == "SUCCESS" && siftScore > 0)
+            {
+                fraudProbability = (fraudProbability * 0.7) + (siftScore * 0.3);
+            }
+
             var threshold = _configuration.GetValue<double>("FraudDetection:Threshold", 0.7);
             var isFraudulent = fraudProbability > threshold;
             var requiresManualReview = await _fraudRulesEngine.RequiresManualReviewAsync(transaction, fraudProbability);
@@ -88,6 +99,7 @@ public class FraudScoringService : IFraudScoringService
             var riskFactors = new Dictionary<string, double>
             {
                 { "EnsembleScore", fraudProbability },
+                { "SiftScienceScore", siftScore },
                 { "BehavioralRisk", behavioralData.RiskScore / 100.0 },
                 { "VelocityRisk", advancedRiskScores.GetValueOrDefault("VelocityRisk", 0) },
                 { "DeviceRisk", advancedRiskScores.GetValueOrDefault("DeviceRisk", 0) },
