@@ -61,6 +61,8 @@ Enterprise-grade payment fraud detection system with real-time transaction monit
 #### Backend
 - **Framework**: ASP.NET Core 8.0
 - **Architecture**: Razor Pages with clean separation
+- **Validation**: FluentValidation with comprehensive transaction rules
+- **Logging**: Azure Application Insights for telemetry and monitoring
 - **Payment Gateways**: Stripe, PayPal, Braintree, Authorize.Net
 - **Fraud Detection**: ONNX ML models, behavioral analytics
 - **Notifications**: Twilio (SMS), Email
@@ -106,6 +108,7 @@ Enterprise-grade payment fraud detection system with real-time transaction monit
 5. Access the application at `http://localhost:5000`
 
 ## Environment Variables
+- `APPLICATIONINSIGHTS_CONNECTION_STRING` - Azure Application Insights connection string
 - Azure Cosmos DB connection string
 - Event Hubs connection string
 - Service Bus connection string
@@ -127,6 +130,7 @@ Enterprise-grade payment fraud detection system with real-time transaction monit
 - `/Middleware` - Custom middleware components (Rate Limiting, Request Logging, Exception Handling)
 - `/Models` - Data models and DTOs
 - `/Pages` - Razor Pages (Dashboard, Analytics, Settings, Alerts, Transactions)
+- `/Validators` - FluentValidation validators for data integrity
 - `/wwwroot` - Static assets (CSS, JS, images)
 
 ### Custom Middlewares (Production-Ready)
@@ -149,6 +153,8 @@ Enterprise-grade payment fraud detection system with real-time transaction monit
 ✅ Geolocation risk assessment
 ✅ Configurable alert rules
 ✅ Webhook integrations
+✅ FluentValidation with date/time checks
+✅ Azure Application Insights telemetry
 
 ## Future Enhancements
 - Geographic map visualization with real coordinates
