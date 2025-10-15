@@ -71,6 +71,10 @@ builder.Services.AddScoped<IFraudRulesEngine, FraudRulesEngine>();
 builder.Services.AddScoped<ISiftScienceService, SiftScienceService>();
 builder.Services.AddScoped<IFraudScoringService, FraudScoringService>();
 
+builder.Services.AddSingleton<IAzureAISearchService, AzureAISearchService>();
+builder.Services.AddSingleton<IAzureOpenAIService, AzureOpenAIService>();
+builder.Services.AddSingleton<IAnomalyDetectionService, AnomalyDetectionService>();
+
 ActivitySource.AddActivityListener(new ActivityListener
 {
     ShouldListenTo = source => source.Name == DistributedTracing.ServiceName,

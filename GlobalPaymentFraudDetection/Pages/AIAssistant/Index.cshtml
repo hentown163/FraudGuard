@@ -1,0 +1,188 @@
+@page
+@model GlobalPaymentFraudDetection.Pages.AIAssistant.IndexModel
+@{
+    ViewData["Title"] = "AI Fraud Assistant";
+}
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h2 mb-3">
+                <i class="bi bi-robot me-2"></i>AI Fraud Investigation Assistant
+            </h1>
+            <p class="text-muted">Ask questions about fraud patterns, get insights, and investigate suspicious transactions using AI</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-chat-dots me-2"></i>Chat with AI Assistant</h5>
+                </div>
+                <div class="card-body" style="height: 500px; overflow-y: auto;" id="chatContainer">
+                    <div id="chatMessages">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Welcome!</strong> I'm your AI fraud detection assistant. I can help you:
+                            <ul class="mb-0 mt-2">
+                                <li>Analyze suspicious transactions</li>
+                                <li>Identify fraud patterns</li>
+                                <li>Provide investigation recommendations</li>
+                                <li>Answer questions about fraud detection strategies</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="userMessage" 
+                               placeholder="Ask me anything about fraud detection..." 
+                               onkeypress="if(event.key === 'Enter') sendMessage()">
+                        <button class="btn btn-primary" onclick="sendMessage()">
+                            <i class="bi bi-send me-1"></i>Send
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="bi bi-search me-2"></i>Intelligent Search</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="searchQuery" class="form-label">Natural Language Search</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="searchQuery" 
+                                   placeholder="e.g., high-value transactions from suspicious IPs">
+                            <button class="btn btn-secondary" onclick="performSearch()">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted">Use natural language to search transactions</small>
+                    </div>
+                    <div id="searchResults"></div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="bi bi-lightbulb me-2"></i>Quick Questions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary btn-sm text-start" onclick="askQuestion('What are the most common fraud patterns?')">
+                            What are common fraud patterns?
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm text-start" onclick="askQuestion('How can I reduce false positives?')">
+                            How to reduce false positives?
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm text-start" onclick="askQuestion('What are red flags for card-not-present fraud?')">
+                            CNP fraud red flags?
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm text-start" onclick="askQuestion('How does velocity checking work?')">
+                            Velocity checking explained
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let chatHistory = [];
+
+        async function sendMessage() {
+            const input = document.getElementById('userMessage');
+            const message = input.value.trim();
+            
+            if (!message) return;
+
+            addMessageToChat('user', message);
+            input.value = '';
+
+            try {
+                const response = await fetch('/api/ai/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message, context: [] })
+                });
+
+                const data = await response.json();
+                addMessageToChat('assistant', data.response);
+            } catch (error) {
+                addMessageToChat('system', 'Error: Unable to get response. Please try again.');
+            }
+        }
+
+        function askQuestion(question) {
+            document.getElementById('userMessage').value = question;
+            sendMessage();
+        }
+
+        function addMessageToChat(role, content) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `mb-3 ${role === 'user' ? 'text-end' : ''}`;
+            
+            const badgeClass = role === 'user' ? 'bg-primary' : role === 'assistant' ? 'bg-success' : 'bg-secondary';
+            const icon = role === 'user' ? 'person-fill' : role === 'assistant' ? 'robot' : 'info-circle';
+            
+            messageDiv.innerHTML = `
+                <div class="d-inline-block text-start" style="max-width: 80%;">
+                    <span class="badge ${badgeClass} mb-1">
+                        <i class="bi bi-${icon} me-1"></i>${role === 'user' ? 'You' : role === 'assistant' ? 'AI Assistant' : 'System'}
+                    </span>
+                    <div class="card ${role === 'user' ? 'bg-primary text-white' : 'bg-light'}">
+                        <div class="card-body p-2 small">
+                            ${content}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            chatMessages.appendChild(messageDiv);
+            document.getElementById('chatContainer').scrollTop = document.getElementById('chatContainer').scrollHeight;
+        }
+
+        async function performSearch() {
+            const query = document.getElementById('searchQuery').value.trim();
+            if (!query) return;
+
+            const resultsDiv = document.getElementById('searchResults');
+            resultsDiv.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div> Searching...';
+
+            try {
+                const response = await fetch(`/api/ai/search?q=${encodeURIComponent(query)}&semantic=true`);
+                const transactions = await response.json();
+
+                if (transactions.length === 0) {
+                    resultsDiv.innerHTML = '<div class="alert alert-warning">No results found</div>';
+                    return;
+                }
+
+                let html = `<h6 class="mb-2">Found ${transactions.length} transactions:</h6><div class="list-group">`;
+                transactions.forEach(t => {
+                    html += `
+                        <a href="/Transactions/Details?id=${t.id}" class="list-group-item list-group-item-action">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small><strong>${t.id.substring(0, 8)}</strong></small>
+                                <span class="badge ${t.fraudScore > 0.7 ? 'bg-danger' : 'bg-success'}">${(t.fraudScore * 100).toFixed(0)}%</span>
+                            </div>
+                            <small class="text-muted">${t.amount} ${t.currency} - ${t.userId}</small>
+                        </a>
+                    `;
+                });
+                html += '</div>';
+                resultsDiv.innerHTML = html;
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="alert alert-danger">Search error. Please try again.</div>';
+            }
+        }
+    </script>
+}
