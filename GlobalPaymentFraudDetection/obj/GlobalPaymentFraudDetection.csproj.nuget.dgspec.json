@@ -43,6 +43,10 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
+            "AuthorizeNet": {
+              "target": "Package",
+              "version": "[2.0.4, )"
+            },
             "Azure.Identity": {
               "target": "Package",
               "version": "[1.14.1, )"
@@ -78,6 +82,10 @@
             "Newtonsoft.Json": {
               "target": "Package",
               "version": "[13.0.3, )"
+            },
+            "Sift": {
+              "target": "Package",
+              "version": "[1.5.0, )"
             },
             "Stripe.net": {
               "target": "Package",
