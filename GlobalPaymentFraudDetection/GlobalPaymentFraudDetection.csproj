@@ -25,17 +25,17 @@
     <PackageReference Include="MaxMind.GeoIP2" Version="5.3.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     
-    <!-- Azure Functions Support -->
-    <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.23.0" />
-    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.2.0" />
-    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Timer" Version="4.3.1" />
-    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.ServiceBus" Version="5.22.0" />
+    <!-- Azure Functions Support - Commented out pending Azure setup -->
+    <!-- <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.23.0" /> -->
+    <!-- <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.2.0" /> -->
+    <!-- <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Timer" Version="4.3.1" /> -->
+    <!-- <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.ServiceBus" Version="5.22.0" /> -->
     
-    <!-- Azure AI Services -->
-    <PackageReference Include="Azure.Search.Documents" Version="11.6.0" />
-    <PackageReference Include="Azure.AI.OpenAI" Version="2.1.0" />
-    <PackageReference Include="Azure.AI.AnomalyDetector" Version="3.0.0-preview.6" />
-    <PackageReference Include="Azure.AI.TextAnalytics" Version="5.3.0" />
+    <!-- Azure AI Services - Commented out pending Azure setup -->
+    <!-- <PackageReference Include="Azure.Search.Documents" Version="11.6.0" /> -->
+    <!-- <PackageReference Include="Azure.AI.OpenAI" Version="2.1.0" /> -->
+    <!-- <PackageReference Include="Azure.AI.AnomalyDetector" Version="3.0.0-preview.6" /> -->
+    <!-- <PackageReference Include="Azure.AI.TextAnalytics" Version="5.3.0" /> -->
   </ItemGroup>
 
 </Project>

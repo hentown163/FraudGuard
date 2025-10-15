@@ -18,6 +18,10 @@ build_property.GenerateRazorMetadataSourceChecksumAttributes =
 build_property.MSBuildProjectDirectory = /home/runner/workspace/GlobalPaymentFraudDetection
 build_property._RazorSourceGeneratorDebug = 
 
+[/home/runner/workspace/GlobalPaymentFraudDetection/Pages/AIAssistant.disabled/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQUlBc3Npc3RhbnQuZGlzYWJsZWQvSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
 [/home/runner/workspace/GlobalPaymentFraudDetection/Pages/Alerts/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQWxlcnRzL0luZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 

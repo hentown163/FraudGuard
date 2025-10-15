@@ -71,9 +71,10 @@ builder.Services.AddScoped<IFraudRulesEngine, FraudRulesEngine>();
 builder.Services.AddScoped<ISiftScienceService, SiftScienceService>();
 builder.Services.AddScoped<IFraudScoringService, FraudScoringService>();
 
-builder.Services.AddSingleton<IAzureAISearchService, AzureAISearchService>();
-builder.Services.AddSingleton<IAzureOpenAIService, AzureOpenAIService>();
-builder.Services.AddSingleton<IAnomalyDetectionService, AnomalyDetectionService>();
+// Azure AI Services - Uncomment when Azure credentials are configured
+// builder.Services.AddSingleton<IAzureAISearchService, AzureAISearchService>();
+// builder.Services.AddSingleton<IAzureOpenAIService, AzureOpenAIService>();
+// builder.Services.AddSingleton<IAnomalyDetectionService, AnomalyDetectionService>();
 
 ActivitySource.AddActivityListener(new ActivityListener
 {
