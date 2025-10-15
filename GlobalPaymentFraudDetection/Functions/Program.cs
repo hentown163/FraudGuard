@@ -7,6 +7,11 @@ using Microsoft.Azure.Cosmos;
 using Azure.Messaging.ServiceBus;
 using Azure.Security.KeyVault.Secrets;
 using Azure.Identity;
+using GlobalPaymentFraudDetection.Core.Interfaces.Services;
+using GlobalPaymentFraudDetection.Core.Interfaces.Repositories;
+using GlobalPaymentFraudDetection.Core.Services;
+using GlobalPaymentFraudDetection.Core.Repositories;
+using GlobalPaymentFraudDetection.Infrastructure;
 
 var builder = FunctionsApplication.CreateBuilder(args);
 
@@ -47,6 +52,24 @@ if (!string.IsNullOrEmpty(keyVaultUri))
 }
 
 builder.Services.AddHttpClient();
+
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
+builder.Services.AddScoped<IFraudAlertRepository, FraudAlertRepository>();
+builder.Services.AddScoped<IUserProfileRepository, UserProfileRepository>();
+
+builder.Services.AddScoped<IFraudScoringService, FraudScoringService>();
+builder.Services.AddScoped<IAdvancedRiskScoringService, AdvancedRiskScoringService>();
+builder.Services.AddScoped<IEnsembleModelService, EnsembleModelService>();
+builder.Services.AddScoped<IFraudRulesEngine, FraudRulesEngine>();
+builder.Services.AddScoped<IOnnxModelService, OnnxModelService>();
+builder.Services.AddScoped<IBehavioralAnalysisService, BehavioralAnalysisService>();
+builder.Services.AddScoped<ICosmosDbService, CosmosDbService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IServiceBusService, ServiceBusService>();
+builder.Services.AddScoped<IKeyVaultService, KeyVaultService>();
+builder.Services.AddScoped<IPaymentGatewayService, PaymentGatewayService>();
+builder.Services.AddScoped<ISiftScienceService, SiftScienceService>();
 
 builder.Services.Configure<LoggerFilterOptions>(options =>
 {

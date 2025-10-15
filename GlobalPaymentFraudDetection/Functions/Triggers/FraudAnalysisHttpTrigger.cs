@@ -3,6 +3,8 @@ using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Text.Json;
+using GlobalPaymentFraudDetection.Models;
+using GlobalPaymentFraudDetection.Core.Interfaces.Services;
 using GlobalPaymentFraudDetection.Functions.Models;
 
 namespace GlobalPaymentFraudDetection.Functions.Triggers;
@@ -10,16 +12,24 @@ namespace GlobalPaymentFraudDetection.Functions.Triggers;
 public class FraudAnalysisHttpTrigger
 {
     private readonly ILogger<FraudAnalysisHttpTrigger> _logger;
+    private readonly IFraudScoringService _fraudScoringService;
+    private readonly ICosmosDbService _cosmosDbService;
 
-    public FraudAnalysisHttpTrigger(ILogger<FraudAnalysisHttpTrigger> logger)
+    public FraudAnalysisHttpTrigger(
+        ILogger<FraudAnalysisHttpTrigger> logger,
+        IFraudScoringService fraudScoringService,
+        ICosmosDbService cosmosDbService)
     {
         _logger = logger;
+        _fraudScoringService = fraudScoringService;
+        _cosmosDbService = cosmosDbService;
     }
 
     [Function("AnalyzeFraud")]
     public async Task<HttpResponseData> AnalyzeFraud(
         [HttpTrigger(AuthorizationLevel.Function, "post", Route = "fraud/analyze")] HttpRequestData req,
-        FunctionContext executionContext)
+        FunctionContext executionContext,
+        CancellationToken cancellationToken)
     {
         _logger.LogInformation("Fraud analysis request received");
 
@@ -43,24 +53,25 @@ public class FraudAnalysisHttpTrigger
                 return badRequest;
             }
 
-            var fraudScore = CalculateFraudScore(analysisRequest);
-            var riskLevel = DetermineRiskLevel(fraudScore);
-            var decision = MakeDecision(fraudScore);
-            var riskFactors = IdentifyRiskFactors(analysisRequest, fraudScore);
+            var transaction = MapToTransaction(analysisRequest);
+            
+            var fraudResult = await _fraudScoringService.ScoreTransactionAsync(transaction);
+
+            await _cosmosDbService.StoreTransactionAsync(transaction);
 
             var response = new FraudAnalysisResponse
             {
-                TransactionId = analysisRequest.TransactionId,
-                FraudScore = fraudScore,
-                RiskLevel = riskLevel,
-                Decision = decision,
-                RiskFactors = riskFactors,
-                AnalyzedAt = DateTime.UtcNow
+                TransactionId = transaction.TransactionId,
+                FraudScore = fraudResult.FraudProbability,
+                RiskLevel = DetermineRiskLevel(fraudResult.FraudProbability),
+                Decision = fraudResult.Decision,
+                RiskFactors = fraudResult.RiskFactors.Keys.ToList(),
+                AnalyzedAt = fraudResult.ProcessedAt
             };
 
             _logger.LogInformation(
                 "Fraud analysis completed for transaction {TransactionId}: Score={FraudScore}, Decision={Decision}",
-                analysisRequest.TransactionId, fraudScore, decision);
+                transaction.TransactionId, fraudResult.FraudProbability, fraudResult.Decision);
 
             var httpResponse = req.CreateResponse(HttpStatusCode.OK);
             await httpResponse.WriteAsJsonAsync(response);
@@ -78,7 +89,8 @@ public class FraudAnalysisHttpTrigger
     [Function("BulkAnalyze")]
     public async Task<HttpResponseData> BulkAnalyze(
         [HttpTrigger(AuthorizationLevel.Function, "post", Route = "fraud/bulk-analyze")] HttpRequestData req,
-        FunctionContext executionContext)
+        FunctionContext executionContext,
+        CancellationToken cancellationToken)
     {
         _logger.LogInformation("Bulk fraud analysis request received");
 
@@ -95,17 +107,28 @@ public class FraudAnalysisHttpTrigger
                 return badRequest;
             }
 
-            var responses = requests.Select(r => new FraudAnalysisResponse
-            {
-                TransactionId = r.TransactionId,
-                FraudScore = CalculateFraudScore(r),
-                RiskLevel = DetermineRiskLevel(CalculateFraudScore(r)),
-                Decision = MakeDecision(CalculateFraudScore(r)),
-                RiskFactors = IdentifyRiskFactors(r, CalculateFraudScore(r)),
-                AnalyzedAt = DateTime.UtcNow
-            }).ToList();
+            _logger.LogInformation("Processing batch of {Count} transactions", requests.Count);
 
-            _logger.LogInformation("Bulk analysis completed for {Count} transactions", responses.Count);
+            var tasks = requests.Select(async r =>
+            {
+                var transaction = MapToTransaction(r);
+                var result = await _fraudScoringService.ScoreTransactionAsync(transaction);
+                await _cosmosDbService.StoreTransactionAsync(transaction);
+
+                return new FraudAnalysisResponse
+                {
+                    TransactionId = transaction.TransactionId,
+                    FraudScore = result.FraudProbability,
+                    RiskLevel = DetermineRiskLevel(result.FraudProbability),
+                    Decision = result.Decision,
+                    RiskFactors = result.RiskFactors.Keys.ToList(),
+                    AnalyzedAt = result.ProcessedAt
+                };
+            });
+
+            var responses = await Task.WhenAll(tasks);
+
+            _logger.LogInformation("Bulk analysis completed for {Count} transactions", responses.Length);
 
             var httpResponse = req.CreateResponse(HttpStatusCode.OK);
             await httpResponse.WriteAsJsonAsync(responses);
@@ -120,23 +143,21 @@ public class FraudAnalysisHttpTrigger
         }
     }
 
-    private double CalculateFraudScore(FraudAnalysisRequest request)
+    private Transaction MapToTransaction(FraudAnalysisRequest request)
     {
-        double score = 0.0;
-
-        if (request.Amount > 1000) score += 0.3;
-        if (request.Amount > 5000) score += 0.2;
-
-        if (request.IpAddress.StartsWith("192.168.") || request.IpAddress.StartsWith("10."))
-            score += 0.1;
-
-        if (string.IsNullOrEmpty(request.DeviceFingerprint))
-            score += 0.15;
-
-        if (request.Metadata?.ContainsKey("velocity_check") == true)
-            score += 0.25;
-
-        return Math.Min(score, 1.0);
+        return new Transaction
+        {
+            TransactionId = request.TransactionId,
+            UserId = request.UserEmail,
+            Amount = request.Amount,
+            Currency = request.Currency,
+            IpAddress = request.IpAddress,
+            PaymentGateway = request.PaymentGateway,
+            DeviceId = request.DeviceFingerprint,
+            Timestamp = DateTime.UtcNow,
+            Status = "PENDING",
+            Metadata = request.Metadata ?? new Dictionary<string, string>()
+        };
     }
 
     private string DetermineRiskLevel(double score)
@@ -148,34 +169,5 @@ public class FraudAnalysisHttpTrigger
             >= 0.3 => "Medium",
             _ => "Low"
         };
-    }
-
-    private string MakeDecision(double score)
-    {
-        return score switch
-        {
-            >= 0.7 => "Decline",
-            >= 0.5 => "Manual Review",
-            _ => "Approve"
-        };
-    }
-
-    private List<string> IdentifyRiskFactors(FraudAnalysisRequest request, double score)
-    {
-        var factors = new List<string>();
-
-        if (request.Amount > 5000)
-            factors.Add("High transaction amount");
-
-        if (string.IsNullOrEmpty(request.DeviceFingerprint))
-            factors.Add("Missing device fingerprint");
-
-        if (request.IpAddress.StartsWith("192.168.") || request.IpAddress.StartsWith("10."))
-            factors.Add("Private IP address detected");
-
-        if (score >= 0.7)
-            factors.Add("Critical fraud score threshold exceeded");
-
-        return factors;
     }
 }
