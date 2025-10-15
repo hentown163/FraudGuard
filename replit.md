@@ -156,29 +156,38 @@ Enterprise-grade payment fraud detection system with real-time transaction monit
 ✅ FluentValidation with date/time checks
 ✅ Azure Application Insights telemetry
 
-## Azure Functions & AI Integration (October 2025 - Infrastructure Ready)
+## Azure Functions & AI Integration (October 2025 - IMPLEMENTED)
 
-### Azure Functions - Serverless Fraud Detection
-Infrastructure has been created for Azure Functions to enable serverless, event-driven fraud detection processing:
+### Azure Functions - Serverless Fraud Detection ✅
+Fully implemented serverless Azure Functions with proper dependency injection for event-driven fraud detection:
 
 **HTTP Triggers:**
-- `AnalyzeFraudTransaction` - Real-time transaction fraud analysis API
-- `SearchTransactions` - Intelligent search with semantic capabilities  
-- `GetFraudInsights` - AI-powered fraud insights and recommendations
+- `AnalyzeFraudTransaction` (POST /api/fraud/analyze) - Real-time transaction fraud analysis API
+- `SearchTransactions` (GET /api/fraud/transactions/search) - Advanced transaction search with filters
+- `GetFraudInsights` (GET /api/fraud/insights) - Fraud analytics and business intelligence
 
 **Timer Triggers:**
-- `DailyFraudReport` - Automated daily fraud summary generation
-- `HourlyAnomalyDetection` - Continuous anomaly monitoring with alerts
+- `DailyFraudReport` (9 AM UTC daily) - Automated daily fraud summary with email delivery
+- `HourlyAnomalyDetection` (Every hour) - Real-time anomaly detection with SMS alerts
 
 **Service Bus Triggers:**
-- `ProcessFraudAlert` - Event-driven fraud alert processing
-- `BatchProcessTransactions` - High-throughput batch transaction analysis
+- `ProcessFraudAlert` (Queue: fraud-alerts) - Event-driven fraud alert processing with notifications
+- `BatchProcessTransactions` (Queue: transaction-batch) - High-throughput parallel batch processing
 
-**Configuration:** 
-All Azure Functions code is available in `/tmp/Functions.backup` and can be activated by:
-1. Installing Azure Functions packages (currently commented out in `.csproj`)
-2. Configuring Azure credentials in `appsettings.json`
-3. Moving Functions folder back to project root
+**Dependency Injection:**
+Complete DI setup in `FunctionsProgram.cs` with:
+- Infrastructure: CosmosClient, ServiceBusClient, SecretClient, IConfiguration
+- Repositories: Transaction, UserProfile, FraudAlert (with proper container resolution)
+- Services: All fraud detection, ML, notification, and behavioral analysis services
+- Configuration: Loaded from local.settings.json and environment variables
+
+**Configuration Files:**
+- `Functions/FunctionsProgram.cs` - Main entry point with DI configuration
+- `Functions/host.json` - Azure Functions host settings (Service Bus, HTTP, monitoring)
+- `Functions/local.settings.json` - Local development settings (gitignored)
+- `Functions/README.md` - Complete documentation for all functions
+
+**Location:** `/GlobalPaymentFraudDetection/Functions/`
 
 ### Azure AI Services Integration
 

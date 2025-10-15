@@ -112,41 +112,35 @@ public class TransactionRepository : CosmosRepository<Transaction>, ITransaction
     public async Task<List<Transaction>> SearchTransactionsAsync(string? userId, string? status, double minScore, DateTime startDate, DateTime endDate)
     {
         var conditions = new List<string> { "c.Timestamp >= @startDate", "c.Timestamp <= @endDate" };
-        var queryDef = new QueryDefinition("SELECT * FROM c WHERE ");
 
         if (!string.IsNullOrEmpty(userId))
         {
             conditions.Add("c.UserId = @userId");
-            queryDef = queryDef.WithParameter("@userId", userId);
         }
 
         if (!string.IsNullOrEmpty(status))
         {
             conditions.Add("c.Status = @status");
-            queryDef = queryDef.WithParameter("@status", status);
         }
 
         if (minScore > 0)
         {
             conditions.Add("c.FraudScore >= @minScore");
-            queryDef = queryDef.WithParameter("@minScore", minScore);
         }
 
-        queryDef = queryDef.WithParameter("@startDate", startDate);
-        queryDef = queryDef.WithParameter("@endDate", endDate);
-
         var fullQuery = $"SELECT * FROM c WHERE {string.Join(" AND ", conditions)} ORDER BY c.Timestamp DESC";
-        queryDef = new QueryDefinition(fullQuery);
+        var queryDef = new QueryDefinition(fullQuery)
+            .WithParameter("@startDate", startDate)
+            .WithParameter("@endDate", endDate);
 
         if (!string.IsNullOrEmpty(userId))
             queryDef = queryDef.WithParameter("@userId", userId);
+        
         if (!string.IsNullOrEmpty(status))
             queryDef = queryDef.WithParameter("@status", status);
+        
         if (minScore > 0)
             queryDef = queryDef.WithParameter("@minScore", minScore);
-
-        queryDef = queryDef.WithParameter("@startDate", startDate);
-        queryDef = queryDef.WithParameter("@endDate", endDate);
 
         var iterator = _container.GetItemQueryIterator<Transaction>(queryDef);
         var transactions = new List<Transaction>();
