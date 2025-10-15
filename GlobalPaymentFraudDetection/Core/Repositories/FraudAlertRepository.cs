@@ -63,4 +63,23 @@ public class FraudAlertRepository : CosmosRepository<FraudAlert>, IFraudAlertRep
 
         return alerts;
     }
+
+    public async Task<List<FraudAlert>> GetAlertsByDateRangeAsync(DateTime startDate, DateTime endDate)
+    {
+        var query = new QueryDefinition(
+            "SELECT * FROM c WHERE c.CreatedAt >= @startDate AND c.CreatedAt <= @endDate ORDER BY c.CreatedAt DESC")
+            .WithParameter("@startDate", startDate)
+            .WithParameter("@endDate", endDate);
+
+        var iterator = _container.GetItemQueryIterator<FraudAlert>(query);
+        var alerts = new List<FraudAlert>();
+
+        while (iterator.HasMoreResults)
+        {
+            var response = await iterator.ReadNextAsync();
+            alerts.AddRange(response);
+        }
+
+        return alerts;
+    }
 }
