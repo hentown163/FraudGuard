@@ -3,15 +3,40 @@ using GlobalPaymentFraudDetection.Core.Services;
 using GlobalPaymentFraudDetection.Hubs;
 using GlobalPaymentFraudDetection.Infrastructure;
 using GlobalPaymentFraudDetection.Middleware;
+using GlobalPaymentFraudDetection.Validators;
 using Microsoft.Azure.Cosmos;
 using Azure.Messaging.ServiceBus;
 using Stripe;
 using System.Diagnostics;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var appInsightsConnectionString = builder.Configuration["ApplicationInsights:ConnectionString"] 
+    ?? Environment.GetEnvironmentVariable("APPLICATIONINSIGHTS_CONNECTION_STRING");
+
+if (!string.IsNullOrEmpty(appInsightsConnectionString))
+{
+    builder.Services.AddApplicationInsightsTelemetry(options =>
+    {
+        options.ConnectionString = appInsightsConnectionString;
+        options.EnableAdaptiveSampling = true;
+        options.EnableQuickPulseMetricStream = true;
+    });
+}
+else
+{
+    builder.Services.AddApplicationInsightsTelemetry();
+}
+
 builder.Services.AddRazorPages();
 builder.Services.AddControllers();
+
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddFluentValidationClientsideAdapters();
+builder.Services.AddValidatorsFromAssemblyContaining<TransactionValidator>();
+
 builder.Services.AddSignalR();
 
 builder.Services.AddMemoryCache();

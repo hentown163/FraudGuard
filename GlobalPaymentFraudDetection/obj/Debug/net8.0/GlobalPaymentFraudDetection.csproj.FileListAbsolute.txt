@@ -100,3 +100,17 @@
 /home/runner/workspace/GlobalPaymentFraudDetection/obj/Debug/net8.0/GlobalPaymentFraudDetection.pdb
 /home/runner/workspace/GlobalPaymentFraudDetection/obj/Debug/net8.0/GlobalPaymentFraudDetection.genruntimeconfig.cache
 /home/runner/workspace/GlobalPaymentFraudDetection/obj/Debug/net8.0/ref/GlobalPaymentFraudDetection.dll
+/home/runner/workspace/GlobalPaymentFraudDetection/bin/Debug/net8.0/FluentValidation.dll
+/home/runner/workspace/GlobalPaymentFraudDetection/bin/Debug/net8.0/FluentValidation.AspNetCore.dll
+/home/runner/workspace/GlobalPaymentFraudDetection/bin/Debug/net8.0/FluentValidation.DependencyInjectionExtensions.dll
+/home/runner/workspace/GlobalPaymentFraudDetection/bin/Debug/net8.0/Microsoft.ApplicationInsights.dll
+/home/runner/workspace/GlobalPaymentFraudDetection/bin/Debug/net8.0/Microsoft.ApplicationInsights.AspNetCore.dll
+/home/runner/workspace/GlobalPaymentFraudDetection/bin/Debug/net8.0/Microsoft.AI.DependencyCollector.dll
+/home/runner/workspace/GlobalPaymentFraudDetection/bin/Debug/net8.0/Microsoft.AI.EventCounterCollector.dll
+/home/runner/workspace/GlobalPaymentFraudDetection/bin/Debug/net8.0/Microsoft.AI.PerfCounterCollector.dll
+/home/runner/workspace/GlobalPaymentFraudDetection/bin/Debug/net8.0/Microsoft.AI.WindowsServer.dll
+/home/runner/workspace/GlobalPaymentFraudDetection/bin/Debug/net8.0/Microsoft.AI.ServerTelemetryChannel.dll
+/home/runner/workspace/GlobalPaymentFraudDetection/bin/Debug/net8.0/Microsoft.Extensions.Logging.ApplicationInsights.dll
+/home/runner/workspace/GlobalPaymentFraudDetection/bin/Debug/net8.0/System.Diagnostics.PerformanceCounter.dll
+/home/runner/workspace/GlobalPaymentFraudDetection/bin/Debug/net8.0/runtimes/win/lib/net6.0/System.Diagnostics.PerformanceCounter.dll
+/home/runner/workspace/GlobalPaymentFraudDetection/obj/Debug/net8.0/GlobalPaymentFraudDetection.MvcApplicationPartsAssemblyInfo.cs
