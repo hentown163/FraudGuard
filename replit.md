@@ -2,7 +2,7 @@
 
 ## Overview
 
-A real-time payment fraud detection system built with ASP.NET Core 8.0 that analyzes transactions from multiple payment gateways (Stripe, PayPal) using machine learning models and behavioral analytics. The system provides sub-300ms fraud scoring, real-time alerting, and an admin dashboard for transaction monitoring and manual review workflows.
+A real-time payment fraud detection system built with ASP.NET Core 8.0 that analyzes transactions from multiple payment gateways (Braintree, Authorize.Net, Stripe, PayPal) using machine learning models, third-party fraud detection (Sift Science), and behavioral analytics. The system provides sub-300ms fraud scoring, automatic gateway failover, real-time alerting, and an admin dashboard for transaction monitoring and manual review workflows.
 
 ## User Preferences
 
@@ -71,10 +71,13 @@ Preferred communication style: Simple, everyday language.
 - **Azure Key Vault**: Secret and configuration management
 
 ### Payment Gateways
-- **Stripe**: Payment processing with webhook event subscriptions
+- **Braintree**: Primary payment gateway with sandbox/production environment support
+- **Authorize.Net**: Secondary payment gateway with merchant authentication
+- **Stripe**: Tertiary payment gateway with webhook event subscriptions
 - **PayPal**: Payment processing with REST API integration
 
 ### Third-Party Services
+- **Sift Science**: Third-party fraud detection service for enhanced risk scoring
 - **MaxMind GeoIP2**: IP geolocation database for location-based fraud detection
 - **Twilio**: SMS notification delivery for fraud alerts
 - **ONNX Runtime**: Machine learning model inference engine
@@ -141,6 +144,29 @@ Preferred communication style: Simple, everyday language.
 - **Blocking Rules**: Blocked countries, blacklisted users, duplicate transactions
 - **Review Rules**: High amounts, velocity violations, suspicious patterns, multiple countries
 - **Configurable Thresholds**: Amount limits, transaction frequency, country restrictions
+
+### Multi-Gateway Payment Processing with Failover (October 2025)
+- **Payment Gateway Service**: Centralized payment processing with automatic failover
+  - **Primary Gateway**: Braintree (default)
+  - **Failover Order**: Braintree → Authorize.Net → Stripe
+  - **Automatic Switching**: System automatically tries next gateway if current gateway fails
+  - **Transaction Tracking**: Comprehensive logging of gateway attempts and results
+  
+- **Gateway Implementations**:
+  - Braintree: SDK-based integration with environment configuration (sandbox/production)
+  - Authorize.Net: Merchant authentication with transaction processing
+  - Stripe: Existing integration maintained as tertiary fallback
+
+**Rationale**: Multi-gateway support with failover prevents payment downtime and provides redundancy. If Braintree experiences issues, the system automatically switches to Authorize.Net, then Stripe if needed.
+
+### Sift Science Fraud Detection Integration (October 2025)
+- **Third-Party Fraud Detection**: Sift Science service integration for enhanced fraud scoring
+- **Score Blending**: When available, combines ensemble model (70%) with Sift Science score (30%)
+- **Fallback Handling**: System uses only ensemble model when Sift Science is unavailable
+- **Status Tracking**: Clear status indicators (SUCCESS, NOT_CONFIGURED, SDK_NOT_IMPLEMENTED, ERROR)
+- **Current State**: Framework implemented with SDK placeholder; requires real API integration
+
+**Rationale**: Integrating third-party fraud detection provides additional signal for fraud scoring, improving detection accuracy while maintaining system resilience when external services are unavailable.
 
 ### Architecture Improvements
 - **Interface Segregation**: Separated service interfaces from implementations
