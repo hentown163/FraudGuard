@@ -156,33 +156,113 @@ Enterprise-grade payment fraud detection system with real-time transaction monit
 ✅ FluentValidation with date/time checks
 ✅ Azure Application Insights telemetry
 
-## Azure Functions & AI Integration (October 2025 - Template Created)
+## Azure Functions - Serverless Fraud Detection (October 2025 - ✅ Implemented)
 
-### Azure Functions - Serverless Fraud Detection Template ⏸️
-A comprehensive Azure Functions template has been created with proper dependency injection architecture. The template includes all necessary infrastructure but requires model alignment to match your specific Transaction and FraudAlert models.
+### Azure Functions - Production-Ready Microservices
+A comprehensive Azure Functions implementation built with .NET 8 isolated worker model, providing scalable event-driven microservices for fraud detection operations.
 
-**Template Location:** `/GlobalPaymentFraudDetection/Functions.template/`
+**Location:** `/GlobalPaymentFraudDetection/Functions/`
 
-**What's Included:**
-- Complete dependency injection setup in `FunctionsProgram.cs`
-- HTTP Triggers for fraud analysis, transaction search, and insights
-- Timer Triggers for daily reports and hourly anomaly detection
-- Service Bus Triggers for alert processing and batch transactions
-- Configuration files (host.json, local.settings.json, README.md)
+**Architecture Overview:**
+- ✅ .NET 8 Isolated Worker Model (future-proof, in-process deprecated Nov 2026)
+- ✅ Dependency Injection with ASP.NET Core patterns
+- ✅ Application Insights telemetry and monitoring
+- ✅ Managed Identity support for Azure services
+- ✅ Production-ready error handling and logging
 
-**Next Steps to Activate:**
-1. Update function code to use correct model properties:
-   - Transaction: Use `TransactionId` instead of `Id`
-   - Transaction: Use `PaymentGateway` instead of `Gateway`
-   - FraudAlert: Use `AlertId` instead of `Id`, `AlertType` instead of `Type`, `Reasons` instead of `RiskFactors`
-2. Update service calls to match actual interface signatures
-3. Uncomment Azure Functions packages in `.csproj`
-4. Move from `Functions.template/` to `Functions/`
+### Implemented Functions
 
-**Dependencies Added:** 
-- .NET 8.0 SDK installed ✓
-- Azure Functions packages available (commented out pending model alignment)
-- Repository methods extended for date range queries and search ✓
+#### HTTP Triggers (Real-time APIs)
+1. **AnalyzeFraud** - `POST /api/fraud/analyze`
+   - Single transaction fraud analysis
+   - Returns fraud score, risk level, decision, and risk factors
+   - Authorization: Function level (requires API key)
+
+2. **BulkAnalyze** - `POST /api/fraud/bulk-analyze`
+   - Batch analysis for multiple transactions
+   - Optimized for high-throughput scenarios
+   - Async processing with parallel analysis
+
+#### Timer Triggers (Scheduled Operations)
+3. **GenerateDailyFraudReport** - Daily at 2:00 AM UTC
+   - Comprehensive daily fraud statistics
+   - Transaction volume and fraud rate calculations
+   - Top risk factors and gateway distribution
+   - Automated report notifications
+
+4. **HourlyAnomalyDetection** - Every hour
+   - Real-time anomaly detection in transaction patterns
+   - Statistical and behavioral analysis
+   - Proactive alert generation
+
+#### Service Bus Triggers (Event-Driven Processing)
+5. **ProcessFraudAlert** - Queue: `fraud-alerts`
+   - Asynchronous alert processing by severity
+   - Critical/High alerts trigger immediate notifications
+   - Medium/Low alerts queued for review
+   - Persistent storage in Cosmos DB
+
+6. **ProcessBatchTransactions** - Queue: `transaction-batch`
+   - Bulk transaction processing from queue
+   - Parallel analysis for efficiency
+   - High-risk percentage monitoring
+
+### Technology Stack
+- **Runtime**: .NET 8.0 Isolated Worker
+- **Functions Version**: v4
+- **Packages**:
+  - Microsoft.Azure.Functions.Worker 2.0.0
+  - Microsoft.Azure.Functions.Worker.Sdk 2.0.0
+  - Azure.Messaging.ServiceBus 7.18.2
+  - Microsoft.Azure.Cosmos 3.54.0
+  - Azure.Security.KeyVault.Secrets 4.7.0
+  - Application Insights integration
+
+### Configuration Files
+- `Program.cs` - Dependency injection and service configuration
+- `host.json` - Function host settings and logging configuration
+- `local.settings.json` - Local development environment variables
+- `Functions.csproj` - Project dependencies and build settings
+- `README.md` - Comprehensive documentation
+
+### Local Development
+```bash
+cd GlobalPaymentFraudDetection/Functions
+dotnet build
+func start
+```
+
+### Deployment
+```bash
+# Azure CLI deployment
+func azure functionapp publish <FunctionAppName>
+
+# Required app settings:
+# - FUNCTIONS_WORKER_RUNTIME=dotnet-isolated
+# - CosmosDbConnectionString
+# - ServiceBusConnectionString
+# - KeyVaultUri
+# - APPLICATIONINSIGHTS_CONNECTION_STRING
+```
+
+### Security Features
+- Function-level authorization with API keys
+- Azure Managed Identity for service access
+- Key Vault integration for secrets management
+- Secure connection string management
+
+### Performance Optimizations
+- Singleton registration for HTTP/DB clients (connection pooling)
+- Async/await throughout for non-blocking I/O
+- Cancellation token support for graceful shutdowns
+- Service Bus batch processing with configurable concurrency
+
+### Monitoring & Observability
+- Application Insights structured logging
+- Request/dependency tracking
+- Custom metrics and telemetry
+- Exception tracking with stack traces
+- Performance monitoring and alerts
 
 ### Azure AI Services Integration
 
