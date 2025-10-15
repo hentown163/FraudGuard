@@ -1,4 +1,4 @@
-using GlobalPaymentFraudDetection.Repositories;
+using GlobalPaymentFraudDetection.Core.Interfaces.Repositories;
 
 namespace GlobalPaymentFraudDetection.Infrastructure;
 

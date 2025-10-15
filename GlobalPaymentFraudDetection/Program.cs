@@ -1,4 +1,5 @@
-using GlobalPaymentFraudDetection.Services;
+using GlobalPaymentFraudDetection.Core.Interfaces.Services;
+using GlobalPaymentFraudDetection.Core.Services;
 using GlobalPaymentFraudDetection.Hubs;
 using GlobalPaymentFraudDetection.Infrastructure;
 using GlobalPaymentFraudDetection.Middleware;

@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using GlobalPaymentFraudDetection.Services;
+using GlobalPaymentFraudDetection.Core.Interfaces.Services;
 using GlobalPaymentFraudDetection.Hubs;
 using Microsoft.AspNetCore.SignalR;
 

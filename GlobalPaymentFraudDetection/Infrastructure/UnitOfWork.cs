@@ -1,5 +1,6 @@
 using Microsoft.Azure.Cosmos;
-using GlobalPaymentFraudDetection.Repositories;
+using GlobalPaymentFraudDetection.Core.Interfaces.Repositories;
+using GlobalPaymentFraudDetection.Core.Repositories;
 
 namespace GlobalPaymentFraudDetection.Infrastructure;
 

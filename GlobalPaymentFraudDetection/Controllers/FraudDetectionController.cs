@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using GlobalPaymentFraudDetection.Services;
+using GlobalPaymentFraudDetection.Core.Interfaces.Services;
 using GlobalPaymentFraudDetection.Models;
 
 namespace GlobalPaymentFraudDetection.Controllers;
