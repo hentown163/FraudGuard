@@ -156,7 +156,93 @@ Enterprise-grade payment fraud detection system with real-time transaction monit
 ✅ FluentValidation with date/time checks
 ✅ Azure Application Insights telemetry
 
-## Future Enhancements
+## Azure Functions & AI Integration (October 2025 - Infrastructure Ready)
+
+### Azure Functions - Serverless Fraud Detection
+Infrastructure has been created for Azure Functions to enable serverless, event-driven fraud detection processing:
+
+**HTTP Triggers:**
+- `AnalyzeFraudTransaction` - Real-time transaction fraud analysis API
+- `SearchTransactions` - Intelligent search with semantic capabilities  
+- `GetFraudInsights` - AI-powered fraud insights and recommendations
+
+**Timer Triggers:**
+- `DailyFraudReport` - Automated daily fraud summary generation
+- `HourlyAnomalyDetection` - Continuous anomaly monitoring with alerts
+
+**Service Bus Triggers:**
+- `ProcessFraudAlert` - Event-driven fraud alert processing
+- `BatchProcessTransactions` - High-throughput batch transaction analysis
+
+**Configuration:** 
+All Azure Functions code is available in `/tmp/Functions.backup` and can be activated by:
+1. Installing Azure Functions packages (currently commented out in `.csproj`)
+2. Configuring Azure credentials in `appsettings.json`
+3. Moving Functions folder back to project root
+
+### Azure AI Services Integration
+
+**Azure AI Search:**
+- Intelligent transaction search with natural language queries
+- Semantic search capabilities for complex fraud pattern detection
+- Automatic indexing of transactions for fast retrieval
+- Full-text search with filters and facets
+
+**Azure OpenAI:**
+- AI-powered fraud pattern analysis and insights
+- Natural language fraud investigation assistant
+- Automated fraud summary generation
+- Anomaly detection with AI explanations
+- Conversational fraud Q&A interface
+
+**Azure Anomaly Detector:**
+- Time-series anomaly detection for transaction patterns
+- Statistical and AI-based anomaly identification
+- Real-time transaction anomaly scoring
+- Historical pattern analysis
+
+**Azure Text Analytics:**
+- Sentiment analysis for transaction descriptions
+- Key phrase extraction from fraud alerts
+- Entity recognition in transaction metadata
+
+### AI Assistant UI (Temporarily Disabled)
+A comprehensive AI-powered fraud investigation interface has been built:
+- Natural language chat interface for fraud questions
+- Intelligent transaction search with semantic understanding
+- Quick-access fraud pattern queries
+- Real-time AI insights and recommendations
+
+**Location:** `/tmp/AIAssistant.backup` - Available for activation once Azure credentials are configured
+
+### Configuration Required
+To activate Azure AI features, add the following to `appsettings.json`:
+
+```json
+{
+  "AzureAISearch": {
+    "Endpoint": "https://your-search-service.search.windows.net",
+    "ApiKey": "your-api-key"
+  },
+  "AzureOpenAI": {
+    "Endpoint": "https://your-openai-service.openai.azure.com",
+    "ApiKey": "your-api-key",
+    "DeploymentName": "gpt-4"
+  },
+  "AzureAnomalyDetector": {
+    "Endpoint": "https://your-anomaly-detector.cognitiveservices.azure.com",
+    "ApiKey": "your-api-key"
+  }
+}
+```
+
+Then:
+1. Uncomment Azure package references in `GlobalPaymentFraudDetection.csproj`
+2. Uncomment Azure service registrations in `Program.cs`
+3. Move backup files from `/tmp` back to project
+4. Rebuild and redeploy
+
+### Future Enhancements
 - Geographic map visualization with real coordinates
 - Advanced ML model retraining interface
 - User role management and permissions
@@ -165,3 +251,6 @@ Enterprise-grade payment fraud detection system with real-time transaction monit
 - Integration with more payment gateways
 - Enhanced behavioral pattern detection
 - Automated response actions based on rules
+- **Azure Foundry AI Studio integration** for model fine-tuning
+- **Multi-modal AI analysis** (OCR for document fraud detection)
+- **Predictive fraud forecasting** using Azure Machine Learning
