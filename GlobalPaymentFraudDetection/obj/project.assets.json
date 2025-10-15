@@ -11,6 +11,58 @@
           "lib/AuthorizeNet.dll": {}
         }
       },
+      "Azure.AI.AnomalyDetector/3.0.0-preview.6": {
+        "type": "package",
+        "dependencies": {
+          "Azure.Core": "1.26.0",
+          "System.Text.Json": "4.7.2"
+        },
+        "compile": {
+          "lib/netstandard2.0/Azure.AI.AnomalyDetector.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/netstandard2.0/Azure.AI.AnomalyDetector.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "Azure.AI.OpenAI/2.1.0": {
+        "type": "package",
+        "dependencies": {
+          "Azure.Core": "1.44.1",
+          "OpenAI": "2.1.0"
+        },
+        "compile": {
+          "lib/netstandard2.0/Azure.AI.OpenAI.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/netstandard2.0/Azure.AI.OpenAI.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "Azure.AI.TextAnalytics/5.3.0": {
+        "type": "package",
+        "dependencies": {
+          "Azure.Core": "1.33.0",
+          "Microsoft.Bcl.AsyncInterfaces": "1.1.1",
+          "System.Text.Json": "4.7.2"
+        },
+        "compile": {
+          "lib/netstandard2.0/Azure.AI.TextAnalytics.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/netstandard2.0/Azure.AI.TextAnalytics.dll": {
+            "related": ".xml"
+          }
+        }
+      },
       "Azure.Core/1.46.1": {
         "type": "package",
         "dependencies": {
@@ -106,6 +158,24 @@
         },
         "runtime": {
           "lib/netstandard2.0/Azure.Messaging.ServiceBus.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "Azure.Search.Documents/11.6.0": {
+        "type": "package",
+        "dependencies": {
+          "Azure.Core": "1.41.0",
+          "System.Text.Json": "4.7.2",
+          "System.Threading.Channels": "4.7.1"
+        },
+        "compile": {
+          "lib/netstandard2.0/Azure.Search.Documents.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/netstandard2.0/Azure.Search.Documents.dll": {
             "related": ".xml"
           }
         }
@@ -1458,6 +1528,23 @@
           }
         }
       },
+      "OpenAI/2.1.0": {
+        "type": "package",
+        "dependencies": {
+          "System.ClientModel": "1.2.1",
+          "System.Diagnostics.DiagnosticSource": "6.0.1"
+        },
+        "compile": {
+          "lib/net6.0/OpenAI.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net6.0/OpenAI.dll": {
+            "related": ".xml"
+          }
+        }
+      },
       "Sift/1.5.0": {
         "type": "package",
         "dependencies": {
@@ -2406,6 +2493,54 @@
         "lib/AuthorizeNet.xml"
       ]
     },
+    "Azure.AI.AnomalyDetector/3.0.0-preview.6": {
+      "sha512": "WomkdWDKaXxw3ZZNcJbzi5fi2ZDwEyqy13asrTTtdZzpWURtMmRwqrjJFrWDQ+2Eytogoejps0xfX86L4xRwjw==",
+      "type": "package",
+      "path": "azure.ai.anomalydetector/3.0.0-preview.6",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "CHANGELOG.md",
+        "README.md",
+        "azure.ai.anomalydetector.3.0.0-preview.6.nupkg.sha512",
+        "azure.ai.anomalydetector.nuspec",
+        "azureicon.png",
+        "lib/netstandard2.0/Azure.AI.AnomalyDetector.dll",
+        "lib/netstandard2.0/Azure.AI.AnomalyDetector.xml"
+      ]
+    },
+    "Azure.AI.OpenAI/2.1.0": {
+      "sha512": "doixr3tcsIcdzbzF9NxKt+6U0NKj6aPeOCPYONPsWjyf3gxVndVJAdjPcVdqeR/3vcRHXRgGnGlv+iXx5jMA4g==",
+      "type": "package",
+      "path": "azure.ai.openai/2.1.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "CHANGELOG.md",
+        "README.md",
+        "azure.ai.openai.2.1.0.nupkg.sha512",
+        "azure.ai.openai.nuspec",
+        "azureicon.png",
+        "lib/netstandard2.0/Azure.AI.OpenAI.dll",
+        "lib/netstandard2.0/Azure.AI.OpenAI.xml"
+      ]
+    },
+    "Azure.AI.TextAnalytics/5.3.0": {
+      "sha512": "QFGaADxfpEcvUPGqIo2CaXUiR00JN1sU14cgmo4wLgizP7v5WGJT9DYqFrzOBPO/tDYaup9mE4secRahe5xVcw==",
+      "type": "package",
+      "path": "azure.ai.textanalytics/5.3.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "CHANGELOG.md",
+        "README.md",
+        "azure.ai.textanalytics.5.3.0.nupkg.sha512",
+        "azure.ai.textanalytics.nuspec",
+        "azureicon.png",
+        "lib/netstandard2.0/Azure.AI.TextAnalytics.dll",
+        "lib/netstandard2.0/Azure.AI.TextAnalytics.xml"
+      ]
+    },
     "Azure.Core/1.46.1": {
       "sha512": "iE5DPOlGsN5kCkF4gN+vasN1RihO0Ypie92oQ5tohQYiokmnrrhLnee+3zcE8n7vB6ZAzhPTfUGAEXX/qHGkYA==",
       "type": "package",
@@ -2494,6 +2629,22 @@
         "azureicon.png",
         "lib/netstandard2.0/Azure.Messaging.ServiceBus.dll",
         "lib/netstandard2.0/Azure.Messaging.ServiceBus.xml"
+      ]
+    },
+    "Azure.Search.Documents/11.6.0": {
+      "sha512": "M7WLx3ANLPHymfqb4Nwk4EwcWWRiHqdvnxJ7RH857baAbkEZ3FYVCRJmHgxH+ROpYOTVSx30uJzsa573/cdD8A==",
+      "type": "package",
+      "path": "azure.search.documents/11.6.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "CHANGELOG.md",
+        "README.md",
+        "azure.search.documents.11.6.0.nupkg.sha512",
+        "azure.search.documents.nuspec",
+        "azureicon.png",
+        "lib/netstandard2.0/Azure.Search.Documents.dll",
+        "lib/netstandard2.0/Azure.Search.Documents.xml"
       ]
     },
     "Azure.Security.KeyVault.Secrets/4.7.0": {
@@ -3905,6 +4056,24 @@
         "newtonsoft.json.13.0.3.nupkg.sha512",
         "newtonsoft.json.nuspec",
         "packageIcon.png"
+      ]
+    },
+    "OpenAI/2.1.0": {
+      "sha512": "zl72nyP4O94ZyEoCLoE8qoc5vp8kSJmRuqR+UdK+jNIjFJGWJYjsb4rAGpMWWRTbPYuk82E8myMJdVQurMLDnQ==",
+      "type": "package",
+      "path": "openai/2.1.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "CHANGELOG.md",
+        "OpenAI.png",
+        "README.md",
+        "lib/net6.0/OpenAI.dll",
+        "lib/net6.0/OpenAI.xml",
+        "lib/netstandard2.0/OpenAI.dll",
+        "lib/netstandard2.0/OpenAI.xml",
+        "openai.2.1.0.nupkg.sha512",
+        "openai.nuspec"
       ]
     },
     "Sift/1.5.0": {
@@ -6645,9 +6814,13 @@
   "projectFileDependencyGroups": {
     "net8.0": [
       "AuthorizeNet >= 2.0.4",
+      "Azure.AI.AnomalyDetector >= 3.0.0-preview.6",
+      "Azure.AI.OpenAI >= 2.1.0",
+      "Azure.AI.TextAnalytics >= 5.3.0",
       "Azure.Identity >= 1.14.1",
       "Azure.Messaging.EventHubs >= 5.11.5",
       "Azure.Messaging.ServiceBus >= 7.18.2",
+      "Azure.Search.Documents >= 11.6.0",
       "Azure.Security.KeyVault.Secrets >= 4.7.0",
       "Braintree >= 5.25.0",
       "FluentValidation >= 12.0.0",
@@ -6709,6 +6882,18 @@
             "target": "Package",
             "version": "[2.0.4, )"
           },
+          "Azure.AI.AnomalyDetector": {
+            "target": "Package",
+            "version": "[3.0.0-preview.6, )"
+          },
+          "Azure.AI.OpenAI": {
+            "target": "Package",
+            "version": "[2.1.0, )"
+          },
+          "Azure.AI.TextAnalytics": {
+            "target": "Package",
+            "version": "[5.3.0, )"
+          },
           "Azure.Identity": {
             "target": "Package",
             "version": "[1.14.1, )"
@@ -6720,6 +6905,10 @@
           "Azure.Messaging.ServiceBus": {
             "target": "Package",
             "version": "[7.18.2, )"
+          },
+          "Azure.Search.Documents": {
+            "target": "Package",
+            "version": "[11.6.0, )"
           },
           "Azure.Security.KeyVault.Secrets": {
             "target": "Package",

@@ -156,38 +156,33 @@ Enterprise-grade payment fraud detection system with real-time transaction monit
 ✅ FluentValidation with date/time checks
 ✅ Azure Application Insights telemetry
 
-## Azure Functions & AI Integration (October 2025 - IMPLEMENTED)
+## Azure Functions & AI Integration (October 2025 - Template Created)
 
-### Azure Functions - Serverless Fraud Detection ✅
-Fully implemented serverless Azure Functions with proper dependency injection for event-driven fraud detection:
+### Azure Functions - Serverless Fraud Detection Template ⏸️
+A comprehensive Azure Functions template has been created with proper dependency injection architecture. The template includes all necessary infrastructure but requires model alignment to match your specific Transaction and FraudAlert models.
 
-**HTTP Triggers:**
-- `AnalyzeFraudTransaction` (POST /api/fraud/analyze) - Real-time transaction fraud analysis API
-- `SearchTransactions` (GET /api/fraud/transactions/search) - Advanced transaction search with filters
-- `GetFraudInsights` (GET /api/fraud/insights) - Fraud analytics and business intelligence
+**Template Location:** `/GlobalPaymentFraudDetection/Functions.template/`
 
-**Timer Triggers:**
-- `DailyFraudReport` (9 AM UTC daily) - Automated daily fraud summary with email delivery
-- `HourlyAnomalyDetection` (Every hour) - Real-time anomaly detection with SMS alerts
+**What's Included:**
+- Complete dependency injection setup in `FunctionsProgram.cs`
+- HTTP Triggers for fraud analysis, transaction search, and insights
+- Timer Triggers for daily reports and hourly anomaly detection
+- Service Bus Triggers for alert processing and batch transactions
+- Configuration files (host.json, local.settings.json, README.md)
 
-**Service Bus Triggers:**
-- `ProcessFraudAlert` (Queue: fraud-alerts) - Event-driven fraud alert processing with notifications
-- `BatchProcessTransactions` (Queue: transaction-batch) - High-throughput parallel batch processing
+**Next Steps to Activate:**
+1. Update function code to use correct model properties:
+   - Transaction: Use `TransactionId` instead of `Id`
+   - Transaction: Use `PaymentGateway` instead of `Gateway`
+   - FraudAlert: Use `AlertId` instead of `Id`, `AlertType` instead of `Type`, `Reasons` instead of `RiskFactors`
+2. Update service calls to match actual interface signatures
+3. Uncomment Azure Functions packages in `.csproj`
+4. Move from `Functions.template/` to `Functions/`
 
-**Dependency Injection:**
-Complete DI setup in `FunctionsProgram.cs` with:
-- Infrastructure: CosmosClient, ServiceBusClient, SecretClient, IConfiguration
-- Repositories: Transaction, UserProfile, FraudAlert (with proper container resolution)
-- Services: All fraud detection, ML, notification, and behavioral analysis services
-- Configuration: Loaded from local.settings.json and environment variables
-
-**Configuration Files:**
-- `Functions/FunctionsProgram.cs` - Main entry point with DI configuration
-- `Functions/host.json` - Azure Functions host settings (Service Bus, HTTP, monitoring)
-- `Functions/local.settings.json` - Local development settings (gitignored)
-- `Functions/README.md` - Complete documentation for all functions
-
-**Location:** `/GlobalPaymentFraudDetection/Functions/`
+**Dependencies Added:** 
+- .NET 8.0 SDK installed ✓
+- Azure Functions packages available (commented out pending model alignment)
+- Repository methods extended for date range queries and search ✓
 
 ### Azure AI Services Integration
 
