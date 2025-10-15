@@ -1,16 +1,28 @@
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using GlobalPaymentFraudDetection.Functions.Models;
+using GlobalPaymentFraudDetection.Core.Interfaces.Repositories;
+using GlobalPaymentFraudDetection.Core.Interfaces.Services;
 
 namespace GlobalPaymentFraudDetection.Functions.Triggers;
 
 public class DailyReportTimerTrigger
 {
     private readonly ILogger<DailyReportTimerTrigger> _logger;
+    private readonly ITransactionRepository _transactionRepository;
+    private readonly IFraudAlertRepository _alertRepository;
+    private readonly INotificationService _notificationService;
 
-    public DailyReportTimerTrigger(ILogger<DailyReportTimerTrigger> logger)
+    public DailyReportTimerTrigger(
+        ILogger<DailyReportTimerTrigger> logger,
+        ITransactionRepository transactionRepository,
+        IFraudAlertRepository alertRepository,
+        INotificationService notificationService)
     {
         _logger = logger;
+        _transactionRepository = transactionRepository;
+        _alertRepository = alertRepository;
+        _notificationService = notificationService;
     }
 
     [Function("GenerateDailyFraudReport")]
@@ -24,22 +36,44 @@ public class DailyReportTimerTrigger
         try
         {
             var reportDate = DateTime.UtcNow.Date.AddDays(-1);
+            var endDate = reportDate.AddDays(1);
+
+            var allTransactions = await _transactionRepository.GetTransactionsByDateRangeAsync(
+                reportDate, endDate);
+
+            var fraudulentTransactions = allTransactions.Where(t => t.IsFraudulent).ToList();
+            var suspiciousTransactions = allTransactions
+                .Where(t => t.FraudScore >= 0.5 && !t.IsFraudulent).ToList();
+
+            var totalAmount = allTransactions.Sum(t => t.Amount);
+            var fraudAmount = fraudulentTransactions.Sum(t => t.Amount);
+
+            var gatewayDistribution = allTransactions
+                .GroupBy(t => t.PaymentGateway)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            var topRiskFactors = fraudulentTransactions
+                .SelectMany(t => t.Status == "DECLINED" ? new[] { "High Fraud Score" } : Array.Empty<string>())
+                .GroupBy(f => f)
+                .OrderByDescending(g => g.Count())
+                .Take(5)
+                .Select(g => g.Key)
+                .ToList();
 
             var report = new DailyReportSummary
             {
                 ReportDate = reportDate,
-                TotalTransactions = await GetTotalTransactions(reportDate, cancellationToken),
-                FraudulentTransactions = await GetFraudulentTransactions(reportDate, cancellationToken),
-                SuspiciousTransactions = await GetSuspiciousTransactions(reportDate, cancellationToken),
-                TotalAmount = await GetTotalAmount(reportDate, cancellationToken),
-                FraudAmount = await GetFraudAmount(reportDate, cancellationToken),
-                TopRiskFactors = await GetTopRiskFactors(reportDate, cancellationToken),
-                GatewayDistribution = await GetGatewayDistribution(reportDate, cancellationToken)
+                TotalTransactions = allTransactions.Count,
+                FraudulentTransactions = fraudulentTransactions.Count,
+                SuspiciousTransactions = suspiciousTransactions.Count,
+                TotalAmount = totalAmount,
+                FraudAmount = fraudAmount,
+                FraudRate = allTransactions.Count > 0
+                    ? (double)fraudulentTransactions.Count / allTransactions.Count * 100
+                    : 0,
+                TopRiskFactors = topRiskFactors.Any() ? topRiskFactors : new List<string> { "No fraud detected" },
+                GatewayDistribution = gatewayDistribution
             };
-
-            report.FraudRate = report.TotalTransactions > 0
-                ? (double)report.FraudulentTransactions / report.TotalTransactions * 100
-                : 0;
 
             _logger.LogInformation(
                 "Daily report generated: Date={ReportDate}, Total={Total}, Fraud={Fraud}, Rate={Rate:F2}%",
@@ -69,7 +103,45 @@ public class DailyReportTimerTrigger
 
         try
         {
-            var anomalies = await DetectTransactionAnomalies(cancellationToken);
+            var oneHourAgo = DateTime.UtcNow.AddHours(-1);
+            var recentTransactions = await _transactionRepository.GetTransactionsByDateRangeAsync(
+                oneHourAgo, DateTime.UtcNow);
+
+            var anomalies = new List<string>();
+
+            var avgAmount = recentTransactions.Any() 
+                ? recentTransactions.Average(t => (double)t.Amount) 
+                : 0;
+            var highValueTransactions = recentTransactions
+                .Where(t => (double)t.Amount > avgAmount * 3)
+                .ToList();
+
+            if (highValueTransactions.Any())
+            {
+                anomalies.Add($"Detected {highValueTransactions.Count} high-value transactions (>3x average)");
+                _logger.LogWarning("Anomaly: {Count} high-value transactions detected", highValueTransactions.Count);
+            }
+
+            var suspiciousScoreTransactions = recentTransactions
+                .Where(t => t.FraudScore >= 0.7)
+                .ToList();
+
+            if (suspiciousScoreTransactions.Count > recentTransactions.Count * 0.1)
+            {
+                anomalies.Add($"High fraud score rate: {suspiciousScoreTransactions.Count} transactions");
+                _logger.LogWarning("Anomaly: {Count} transactions with high fraud scores", suspiciousScoreTransactions.Count);
+            }
+
+            var failedTransactions = recentTransactions
+                .Where(t => t.Status == "DECLINED")
+                .ToList();
+
+            if (failedTransactions.Count > recentTransactions.Count * 0.3)
+            {
+                anomalies.Add($"High decline rate: {failedTransactions.Count} declined transactions");
+                _logger.LogWarning("Anomaly: High decline rate of {Rate:F1}%", 
+                    (double)failedTransactions.Count / recentTransactions.Count * 100);
+            }
 
             if (anomalies.Any())
             {
@@ -78,7 +150,8 @@ public class DailyReportTimerTrigger
             }
             else
             {
-                _logger.LogInformation("No anomalies detected in the last hour");
+                _logger.LogInformation("No anomalies detected in the last hour ({Count} transactions analyzed)", 
+                    recentTransactions.Count);
             }
         }
         catch (Exception ex)
@@ -88,76 +161,20 @@ public class DailyReportTimerTrigger
         }
     }
 
-    private async Task<int> GetTotalTransactions(DateTime date, CancellationToken ct)
-    {
-        await Task.Delay(10, ct);
-        return new Random().Next(1000, 5000);
-    }
-
-    private async Task<int> GetFraudulentTransactions(DateTime date, CancellationToken ct)
-    {
-        await Task.Delay(10, ct);
-        return new Random().Next(10, 100);
-    }
-
-    private async Task<int> GetSuspiciousTransactions(DateTime date, CancellationToken ct)
-    {
-        await Task.Delay(10, ct);
-        return new Random().Next(50, 200);
-    }
-
-    private async Task<decimal> GetTotalAmount(DateTime date, CancellationToken ct)
-    {
-        await Task.Delay(10, ct);
-        return new Random().Next(500000, 2000000);
-    }
-
-    private async Task<decimal> GetFraudAmount(DateTime date, CancellationToken ct)
-    {
-        await Task.Delay(10, ct);
-        return new Random().Next(10000, 50000);
-    }
-
-    private async Task<List<string>> GetTopRiskFactors(DateTime date, CancellationToken ct)
-    {
-        await Task.Delay(10, ct);
-        return new List<string>
-        {
-            "High transaction velocity",
-            "Geographic anomaly",
-            "Suspicious IP address",
-            "Device fingerprint mismatch",
-            "Unusual transaction amount"
-        };
-    }
-
-    private async Task<Dictionary<string, int>> GetGatewayDistribution(DateTime date, CancellationToken ct)
-    {
-        await Task.Delay(10, ct);
-        return new Dictionary<string, int>
-        {
-            { "Stripe", 1200 },
-            { "PayPal", 850 },
-            { "Braintree", 600 },
-            { "Authorize.Net", 450 }
-        };
-    }
-
-    private async Task<List<string>> DetectTransactionAnomalies(CancellationToken ct)
-    {
-        await Task.Delay(50, ct);
-        return new List<string>();
-    }
-
     private async Task ProcessAnomalies(List<string> anomalies, CancellationToken ct)
     {
-        _logger.LogInformation("Processing {Count} anomalies", anomalies.Count);
-        await Task.Delay(100, ct);
+        _logger.LogInformation("Processing {Count} anomalies for notification", anomalies.Count);
+        
+        foreach (var anomaly in anomalies)
+        {
+            _logger.LogWarning("Anomaly detected: {Anomaly}", anomaly);
+        }
     }
 
     private async Task SendReportNotification(DailyReportSummary report, CancellationToken ct)
     {
-        _logger.LogInformation("Sending report notification for {Date}", report.ReportDate);
-        await Task.Delay(50, ct);
+        _logger.LogInformation(
+            "Daily report summary: {Total} transactions, {Fraud} fraudulent ({Rate:F2}% fraud rate), ${Amount:N2} total volume",
+            report.TotalTransactions, report.FraudulentTransactions, report.FraudRate, report.TotalAmount);
     }
 }

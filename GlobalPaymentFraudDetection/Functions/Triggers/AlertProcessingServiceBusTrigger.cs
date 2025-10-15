@@ -1,6 +1,9 @@
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
+using GlobalPaymentFraudDetection.Models;
+using GlobalPaymentFraudDetection.Core.Interfaces.Services;
+using GlobalPaymentFraudDetection.Core.Interfaces.Repositories;
 using GlobalPaymentFraudDetection.Functions.Models;
 
 namespace GlobalPaymentFraudDetection.Functions.Triggers;
@@ -8,10 +11,23 @@ namespace GlobalPaymentFraudDetection.Functions.Triggers;
 public class AlertProcessingServiceBusTrigger
 {
     private readonly ILogger<AlertProcessingServiceBusTrigger> _logger;
+    private readonly IFraudAlertRepository _alertRepository;
+    private readonly INotificationService _notificationService;
+    private readonly IFraudScoringService _fraudScoringService;
+    private readonly ICosmosDbService _cosmosDbService;
 
-    public AlertProcessingServiceBusTrigger(ILogger<AlertProcessingServiceBusTrigger> logger)
+    public AlertProcessingServiceBusTrigger(
+        ILogger<AlertProcessingServiceBusTrigger> logger,
+        IFraudAlertRepository alertRepository,
+        INotificationService notificationService,
+        IFraudScoringService fraudScoringService,
+        ICosmosDbService cosmosDbService)
     {
         _logger = logger;
+        _alertRepository = alertRepository;
+        _notificationService = notificationService;
+        _fraudScoringService = fraudScoringService;
+        _cosmosDbService = cosmosDbService;
     }
 
     [Function("ProcessFraudAlert")]
@@ -38,16 +54,18 @@ public class AlertProcessingServiceBusTrigger
                 "Alert received: AlertId={AlertId}, Type={AlertType}, Severity={Severity}, TransactionId={TransactionId}",
                 alert.AlertId, alert.AlertType, alert.Severity, alert.TransactionId);
 
-            await ProcessAlertBySeverity(alert, cancellationToken);
+            var fraudAlert = MapToFraudAlert(alert);
+            
+            await ProcessAlertBySeverity(fraudAlert, cancellationToken);
 
-            await StoreAlertInDatabase(alert, cancellationToken);
+            await _alertRepository.AddAsync(fraudAlert);
 
             if (alert.Severity == "Critical" || alert.Severity == "High")
             {
-                await SendImmediateNotification(alert, cancellationToken);
+                await SendImmediateNotification(fraudAlert, cancellationToken);
             }
 
-            _logger.LogInformation("Alert {AlertId} processed successfully", alert.AlertId);
+            _logger.LogInformation("Alert {AlertId} processed and stored successfully", alert.AlertId);
         }
         catch (Exception ex)
         {
@@ -78,7 +96,30 @@ public class AlertProcessingServiceBusTrigger
 
             _logger.LogInformation("Processing batch of {Count} transactions", transactions.Count);
 
-            var tasks = transactions.Select(t => AnalyzeTransaction(t, cancellationToken));
+            var tasks = transactions.Select(async r =>
+            {
+                var transaction = MapToTransaction(r);
+                var result = await _fraudScoringService.ScoreTransactionAsync(transaction);
+                
+                transaction.FraudScore = result.FraudProbability;
+                transaction.IsFraudulent = result.IsFraudulent;
+                transaction.Status = result.Decision;
+                
+                await _cosmosDbService.StoreTransactionAsync(transaction);
+
+                return new FraudAnalysisResponse
+                {
+                    TransactionId = transaction.TransactionId,
+                    FraudScore = result.FraudProbability,
+                    RiskLevel = result.FraudProbability >= 0.7 ? "Critical" : 
+                                result.FraudProbability >= 0.5 ? "High" : 
+                                result.FraudProbability >= 0.3 ? "Medium" : "Low",
+                    Decision = result.Decision,
+                    RiskFactors = result.RiskFactors.Keys.ToList(),
+                    AnalyzedAt = result.ProcessedAt
+                };
+            });
+
             var results = await Task.WhenAll(tasks);
 
             var highRiskCount = results.Count(r => r.RiskLevel == "High" || r.RiskLevel == "Critical");
@@ -100,7 +141,7 @@ public class AlertProcessingServiceBusTrigger
         }
     }
 
-    private async Task ProcessAlertBySeverity(AlertMessage alert, CancellationToken ct)
+    private async Task ProcessAlertBySeverity(FraudAlert alert, CancellationToken ct)
     {
         switch (alert.Severity)
         {
@@ -122,57 +163,69 @@ public class AlertProcessingServiceBusTrigger
         }
     }
 
-    private async Task<FraudAnalysisResponse> AnalyzeTransaction(FraudAnalysisRequest request, CancellationToken ct)
+    private FraudAlert MapToFraudAlert(AlertMessage message)
     {
-        await Task.Delay(10, ct);
-
-        var score = CalculateScore(request);
-        return new FraudAnalysisResponse
+        return new FraudAlert
         {
-            TransactionId = request.TransactionId,
-            FraudScore = score,
-            RiskLevel = score >= 0.7 ? "Critical" : score >= 0.5 ? "High" : score >= 0.3 ? "Medium" : "Low",
-            Decision = score >= 0.7 ? "Decline" : score >= 0.5 ? "Manual Review" : "Approve",
-            RiskFactors = new List<string> { "Analyzed in batch" },
-            AnalyzedAt = DateTime.UtcNow
+            AlertId = message.AlertId,
+            TransactionId = message.TransactionId,
+            AlertType = message.AlertType,
+            Severity = message.Severity,
+            Message = message.Message,
+            Reasons = message.Reasons,
+            CreatedAt = message.CreatedAt,
+            Status = "PENDING",
+            IsResolved = false
         };
     }
 
-    private double CalculateScore(FraudAnalysisRequest request)
+    private Transaction MapToTransaction(FraudAnalysisRequest request)
     {
-        double score = 0.0;
-        if (request.Amount > 1000) score += 0.3;
-        if (string.IsNullOrEmpty(request.DeviceFingerprint)) score += 0.2;
-        return Math.Min(score, 1.0);
+        return new Transaction
+        {
+            TransactionId = request.TransactionId,
+            UserId = request.UserEmail,
+            Amount = request.Amount,
+            Currency = request.Currency,
+            IpAddress = request.IpAddress,
+            PaymentGateway = request.PaymentGateway,
+            DeviceId = request.DeviceFingerprint,
+            Timestamp = DateTime.UtcNow,
+            Status = "PENDING",
+            Metadata = request.Metadata ?? new Dictionary<string, string>()
+        };
     }
 
-    private async Task StoreAlertInDatabase(AlertMessage alert, CancellationToken ct)
-    {
-        _logger.LogDebug("Storing alert {AlertId} in database", alert.AlertId);
-        await Task.Delay(20, ct);
-    }
-
-    private async Task SendImmediateNotification(AlertMessage alert, CancellationToken ct)
+    private async Task SendImmediateNotification(FraudAlert alert, CancellationToken ct)
     {
         _logger.LogInformation("Sending immediate notification for alert {AlertId}", alert.AlertId);
-        await Task.Delay(30, ct);
+        
+        try
+        {
+            await _notificationService.SendSmsAlertAsync("+1234567890", alert);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send SMS notification for alert {AlertId}", alert.AlertId);
+        }
     }
 
-    private async Task EscalateAlert(AlertMessage alert, CancellationToken ct)
+    private async Task EscalateAlert(FraudAlert alert, CancellationToken ct)
     {
-        _logger.LogInformation("Escalating critical alert {AlertId}", alert.AlertId);
-        await Task.Delay(50, ct);
+        _logger.LogInformation("Escalating critical alert {AlertId} to management", alert.AlertId);
+        await Task.CompletedTask;
     }
 
-    private async Task NotifySecurityTeam(AlertMessage alert, CancellationToken ct)
+    private async Task NotifySecurityTeam(FraudAlert alert, CancellationToken ct)
     {
         _logger.LogInformation("Notifying security team about alert {AlertId}", alert.AlertId);
-        await Task.Delay(40, ct);
+        await Task.CompletedTask;
     }
 
-    private async Task QueueForReview(AlertMessage alert, CancellationToken ct)
+    private async Task QueueForReview(FraudAlert alert, CancellationToken ct)
     {
-        _logger.LogInformation("Queueing alert {AlertId} for review", alert.AlertId);
-        await Task.Delay(30, ct);
+        _logger.LogInformation("Queueing alert {AlertId} for manual review", alert.AlertId);
+        alert.Status = "REVIEW_PENDING";
+        await Task.CompletedTask;
     }
 }
