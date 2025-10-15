@@ -1,4 +1,4 @@
-modules = ["dotnet-7.0", "web", "nodejs-20", "dotnet-8.0"]
+modules = ["dotnet-7.0", "web", "nodejs-20"]
 [agent]
 expertMode = true
 
@@ -37,6 +37,10 @@ externalPort = 3000
 [[ports]]
 localPort = 39135
 externalPort = 3001
+
+[[ports]]
+localPort = 40625
+externalPort = 3003
 
 [[ports]]
 localPort = 44697
