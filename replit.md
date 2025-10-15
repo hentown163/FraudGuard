@@ -34,6 +34,10 @@ The system is built with ASP.NET Core 8.0 and Razor Pages, following a clean arc
 - Configurable alert rules, email/SMS notifications (Twilio), and webhook configuration.
 - Geolocation risk assessment (MaxMind GeoIP2).
 - API key management and general preferences.
+- **Settings Management** (implemented October 15, 2025):
+  - Custom Alert Rules: Create, edit, and delete alert rules with conditions, thresholds, and actions
+  - Webhook Management: Configure webhooks for real-time fraud detection events
+  - API Key Generation: Generate and manage API keys with environment support and secure key masking
 
 ## External Dependencies
 - **Cloud Services:** Azure Cosmos DB, Azure Event Hubs, Azure Service Bus, Azure Key Vault, Azure Application Insights.

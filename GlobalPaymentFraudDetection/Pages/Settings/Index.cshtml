@@ -501,9 +501,16 @@
                 });
 
                 if (response.ok) {
+                    const result = await response.json();
                     bootstrap.Modal.getInstance(document.getElementById('webhookModal')).hide();
+                    
+                    if (result.secret) {
+                        showToast(`Webhook created! Secret: ${result.secret} - Save it now!`, 'success');
+                    } else {
+                        showToast('Webhook saved successfully!', 'success');
+                    }
+                    
                     loadWebhooks();
-                    showToast('Webhook saved successfully!', 'success');
                 } else {
                     showToast('Error saving webhook', 'error');
                 }
@@ -524,6 +531,7 @@
                             <div>
                                 <h6 class="mb-1">${webhook.name}</h6>
                                 <p class="mb-0 text-muted"><small>${webhook.url}</small></p>
+                                ${webhook.secretHint ? `<p class="mb-0 text-muted"><small>Secret: ${webhook.secretHint}</small></p>` : ''}
                             </div>
                             <div class="d-flex gap-2 align-items-center">
                                 <span class="badge ${webhook.isActive ? 'bg-success' : 'bg-warning'}">${webhook.isActive ? 'Active' : 'Inactive'}</span>

@@ -5,6 +5,11 @@ using System.Text;
 
 namespace GlobalPaymentFraudDetection.Controllers;
 
+/// <summary>
+/// WARNING: This controller uses in-memory storage for demonstration purposes only.
+/// In production, use a persistent database and implement proper encryption for secrets.
+/// Webhook secrets and API keys should be hashed and stored securely.
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 public class SettingsController : ControllerBase
@@ -120,24 +125,47 @@ public class SettingsController : ControllerBase
 
     // Webhook Endpoints
     [HttpGet("webhooks")]
-    public ActionResult<List<Webhook>> GetWebhooks()
+    public ActionResult<List<object>> GetWebhooks()
     {
-        return Ok(_webhooks);
+        var safeWebhooks = _webhooks.Select(w => new
+        {
+            w.Id,
+            w.Name,
+            w.Url,
+            w.Events,
+            SecretHint = MaskSecret(w.Secret),
+            w.IsActive,
+            w.CreatedAt,
+            w.LastTriggeredAt
+        }).ToList();
+        return Ok(safeWebhooks);
     }
 
     [HttpPost("webhooks")]
-    public ActionResult<Webhook> CreateWebhook([FromBody] Webhook webhook)
+    public ActionResult<object> CreateWebhook([FromBody] Webhook webhook)
     {
         webhook.Id = Guid.NewGuid().ToString();
         webhook.CreatedAt = DateTime.UtcNow;
         webhook.Secret = GenerateSecret();
         _webhooks.Add(webhook);
         _logger.LogInformation("Created new webhook: {WebhookName}", webhook.Name);
-        return CreatedAtAction(nameof(GetWebhooks), new { id = webhook.Id }, webhook);
+        
+        return Ok(new
+        {
+            webhook.Id,
+            webhook.Name,
+            webhook.Url,
+            webhook.Events,
+            Secret = webhook.Secret,
+            SecretHint = MaskSecret(webhook.Secret),
+            webhook.IsActive,
+            webhook.CreatedAt,
+            Message = "⚠️ Save this secret now. You won't be able to see it again!"
+        });
     }
 
     [HttpPut("webhooks/{id}")]
-    public ActionResult<Webhook> UpdateWebhook(string id, [FromBody] Webhook webhook)
+    public ActionResult<object> UpdateWebhook(string id, [FromBody] Webhook webhook)
     {
         var existing = _webhooks.FirstOrDefault(w => w.Id == id);
         if (existing == null)
@@ -149,7 +177,18 @@ public class SettingsController : ControllerBase
         existing.IsActive = webhook.IsActive;
 
         _logger.LogInformation("Updated webhook: {WebhookName}", existing.Name);
-        return Ok(existing);
+        
+        return Ok(new
+        {
+            existing.Id,
+            existing.Name,
+            existing.Url,
+            existing.Events,
+            SecretHint = MaskSecret(existing.Secret),
+            existing.IsActive,
+            existing.CreatedAt,
+            existing.LastTriggeredAt
+        });
     }
 
     [HttpDelete("webhooks/{id}")]
@@ -222,14 +261,17 @@ public class SettingsController : ControllerBase
 
     private static string GenerateApiKey()
     {
-        var bytes = RandomNumberGenerator.GetBytes(32);
-        return "fpd_pk_" + Convert.ToBase64String(bytes).Replace("+", "").Replace("/", "").Replace("=", "")[..40];
+        var bytes = RandomNumberGenerator.GetBytes(40);
+        var base64 = Convert.ToBase64String(bytes).Replace("+", "X").Replace("/", "Y").Replace("=", "");
+        var key = base64.Length >= 40 ? base64[..40] : base64.PadRight(40, 'Z');
+        return "fpd_pk_" + key;
     }
 
     private static string GenerateSecret()
     {
-        var bytes = RandomNumberGenerator.GetBytes(24);
-        return Convert.ToBase64String(bytes).Replace("+", "").Replace("/", "").Replace("=", "")[..32];
+        var bytes = RandomNumberGenerator.GetBytes(32);
+        var base64 = Convert.ToBase64String(bytes).Replace("+", "X").Replace("/", "Y").Replace("=", "");
+        return base64.Length >= 32 ? base64[..32] : base64.PadRight(32, 'Z');
     }
 
     private static string MaskApiKey(string key)
@@ -239,6 +281,16 @@ public class SettingsController : ControllerBase
 
         var prefix = key[..10];
         return prefix + new string('*', 28);
+    }
+
+    private static string MaskSecret(string secret)
+    {
+        if (secret.Length < 8)
+            return new string('*', secret.Length);
+
+        var prefix = secret[..4];
+        var suffix = secret[^4..];
+        return prefix + new string('*', secret.Length - 8) + suffix;
     }
 }
 
