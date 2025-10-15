@@ -96,3 +96,7 @@
 /home/runner/workspace/GlobalPaymentFraudDetection/obj/Debug/net8.0/GlobalPaymentFraudDetection.genruntimeconfig.cache
 /home/runner/workspace/GlobalPaymentFraudDetection/obj/Debug/net8.0/ref/GlobalPaymentFraudDetection.dll
 /home/runner/workspace/GlobalPaymentFraudDetection/obj/Debug/net8.0/GlobalPaymentFraudDetection.sourcelink.json
+/home/runner/workspace/GlobalPaymentFraudDetection/bin/Debug/net8.0/AuthorizeNet.dll
+/home/runner/workspace/GlobalPaymentFraudDetection/bin/Debug/net8.0/Braintree.dll
+/home/runner/workspace/GlobalPaymentFraudDetection/bin/Debug/net8.0/Sift.dll
+/home/runner/workspace/GlobalPaymentFraudDetection/bin/Debug/net8.0/System.Xml.XPath.XmlDocument.dll

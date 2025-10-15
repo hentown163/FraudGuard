@@ -2,6 +2,15 @@ using GlobalPaymentFraudDetection.Models;
 using Stripe;
 using Newtonsoft.Json;
 using System.Security;
+using BraintreeGateway = Braintree.BraintreeGateway;
+using BraintreeTransaction = Braintree.Transaction;
+using BraintreeEnvironment = Braintree.Environment;
+using WebhookKind = Braintree.WebhookKind;
+using TransactionRequest = Braintree.TransactionRequest;
+using TransactionOptionsRequest = Braintree.TransactionOptionsRequest;
+using AuthorizeNet.Api.Controllers;
+using AuthorizeNet.Api.Contracts.V1;
+using AuthorizeNet.Api.Controllers.Bases;
 
 namespace GlobalPaymentFraudDetection.Services;
 
@@ -9,11 +18,26 @@ public class PaymentGatewayService : IPaymentGatewayService
 {
     private readonly IKeyVaultService _keyVaultService;
     private readonly ILogger<PaymentGatewayService> _logger;
+    private readonly IConfiguration _configuration;
+    private readonly List<PaymentGatewayType> _gatewayPriority;
 
-    public PaymentGatewayService(IKeyVaultService keyVaultService, ILogger<PaymentGatewayService> logger)
+    public PaymentGatewayService(IKeyVaultService keyVaultService, ILogger<PaymentGatewayService> logger, IConfiguration configuration)
     {
         _keyVaultService = keyVaultService;
         _logger = logger;
+        _configuration = configuration;
+        
+        var primaryGateway = _configuration["PaymentGateway:PrimaryGateway"] ?? "Braintree";
+        var failoverGateways = _configuration.GetSection("PaymentGateway:FailoverGateways").Get<string[]>() ?? Array.Empty<string>();
+        
+        _gatewayPriority = new List<PaymentGatewayType> { Enum.Parse<PaymentGatewayType>(primaryGateway) };
+        foreach (var gateway in failoverGateways)
+        {
+            if (Enum.TryParse<PaymentGatewayType>(gateway, out var gatewayType))
+            {
+                _gatewayPriority.Add(gatewayType);
+            }
+        }
     }
 
     public async Task<PaymentGatewayTransaction> ProcessStripeWebhookAsync(string payload, string signature)
@@ -215,6 +239,354 @@ public class PaymentGatewayService : IPaymentGatewayService
             _logger.LogError(ex, "PayPal webhook signature verification failed");
             return false;
         }
+    }
+
+    public async Task<PaymentGatewayTransaction> ProcessBraintreeWebhookAsync(string payload, string signature)
+    {
+        var braintreeGateway = await GetBraintreeGatewayAsync();
+        
+        var notification = braintreeGateway.WebhookNotification.Parse(signature, payload);
+        
+        if (notification.Kind == WebhookKind.SUBSCRIPTION_CHARGED_SUCCESSFULLY ||
+            notification.Kind == WebhookKind.TRANSACTION_SETTLED)
+        {
+            var transaction = notification.Transaction;
+            
+            return new PaymentGatewayTransaction
+            {
+                GatewayTransactionId = transaction.Id,
+                Gateway = "Braintree",
+                GatewayType = PaymentGatewayType.Braintree,
+                CustomerId = transaction.CustomerDetails?.Id ?? string.Empty,
+                Amount = transaction.Amount ?? 0,
+                Currency = transaction.CurrencyIsoCode ?? "USD",
+                Status = transaction.Status.ToString(),
+                PaymentMethodId = transaction.CreditCard?.Token ?? string.Empty,
+                PaymentMethodType = transaction.PaymentInstrumentType.ToString(),
+                RawData = new Dictionary<string, object> { { "transaction", transaction } },
+                CreatedAt = transaction.CreatedAt ?? DateTime.UtcNow
+            };
+        }
+
+        throw new InvalidOperationException($"Unsupported Braintree webhook kind: {notification.Kind}");
+    }
+
+    public async Task<PaymentGatewayTransaction> ProcessAuthorizeNetWebhookAsync(string payload, Dictionary<string, string> headers)
+    {
+        var webhookData = JsonConvert.DeserializeObject<AuthorizeNetWebhookEvent>(payload);
+        
+        if (webhookData == null)
+            throw new InvalidOperationException("Invalid Authorize.Net webhook payload");
+
+        if (webhookData.EventType == "net.authorize.payment.authorization.created")
+        {
+            dynamic payloadData = webhookData.Payload;
+            
+            return new PaymentGatewayTransaction
+            {
+                GatewayTransactionId = webhookData.NotificationId,
+                Gateway = "AuthorizeNet",
+                GatewayType = PaymentGatewayType.AuthorizeNet,
+                CustomerId = payloadData?.customerProfileId?.ToString() ?? string.Empty,
+                Amount = decimal.Parse(payloadData?.authAmount?.ToString() ?? "0"),
+                Currency = "USD",
+                Status = payloadData?.responseCode?.ToString() == "1" ? "approved" : "declined",
+                PaymentMethodId = payloadData?.paymentProfile?.ToString() ?? string.Empty,
+                PaymentMethodType = "credit_card",
+                RawData = new Dictionary<string, object> { { "event", webhookData } },
+                CreatedAt = webhookData.EventDate
+            };
+        }
+
+        throw new InvalidOperationException($"Unsupported Authorize.Net event type: {webhookData.EventType}");
+    }
+
+    public async Task<PaymentGatewayResult> ProcessPaymentWithFailoverAsync(
+        decimal amount, 
+        string currency, 
+        string customerId, 
+        string paymentMethodToken)
+    {
+        var enableFailover = _configuration.GetValue<bool>("PaymentGateway:EnableFailover", true);
+        
+        foreach (var gateway in _gatewayPriority)
+        {
+            try
+            {
+                _logger.LogInformation("Attempting payment with gateway: {Gateway}", gateway);
+                
+                var result = gateway switch
+                {
+                    PaymentGatewayType.Braintree => await ProcessBraintreePaymentAsync(amount, currency, customerId, paymentMethodToken),
+                    PaymentGatewayType.AuthorizeNet => await ProcessAuthorizeNetPaymentAsync(amount, currency, customerId, paymentMethodToken),
+                    PaymentGatewayType.Stripe => await ProcessStripePaymentAsync(amount, currency, customerId, paymentMethodToken),
+                    _ => throw new NotImplementedException($"Gateway {gateway} not implemented")
+                };
+
+                if (result.Success)
+                {
+                    _logger.LogInformation("Payment successful with gateway: {Gateway}", gateway);
+                    return result;
+                }
+                
+                _logger.LogWarning("Payment failed with gateway {Gateway}: {Error}", gateway, result.ErrorMessage);
+                
+                if (!enableFailover || _gatewayPriority.Last() == gateway)
+                {
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing payment with gateway: {Gateway}", gateway);
+                
+                if (!enableFailover || _gatewayPriority.Last() == gateway)
+                {
+                    return new PaymentGatewayResult
+                    {
+                        Success = false,
+                        ErrorMessage = ex.Message,
+                        GatewayUsed = gateway
+                    };
+                }
+            }
+        }
+
+        return new PaymentGatewayResult
+        {
+            Success = false,
+            ErrorMessage = "All payment gateways failed",
+            GatewayUsed = _gatewayPriority.First()
+        };
+    }
+
+    private async Task<PaymentGatewayResult> ProcessBraintreePaymentAsync(
+        decimal amount, 
+        string currency, 
+        string customerId, 
+        string paymentMethodToken)
+    {
+        var gateway = await GetBraintreeGatewayAsync();
+        
+        var request = new TransactionRequest
+        {
+            Amount = amount,
+            PaymentMethodToken = paymentMethodToken,
+            CustomerId = customerId,
+            Options = new TransactionOptionsRequest
+            {
+                SubmitForSettlement = true
+            }
+        };
+
+        var result = gateway.Transaction.Sale(request);
+        
+        if (result.IsSuccess())
+        {
+            return new PaymentGatewayResult
+            {
+                Success = true,
+                TransactionId = result.Target.Id,
+                GatewayUsed = PaymentGatewayType.Braintree,
+                Transaction = new PaymentGatewayTransaction
+                {
+                    GatewayTransactionId = result.Target.Id,
+                    Gateway = "Braintree",
+                    GatewayType = PaymentGatewayType.Braintree,
+                    CustomerId = customerId,
+                    Amount = amount,
+                    Currency = currency,
+                    Status = result.Target.Status.ToString(),
+                    PaymentMethodId = paymentMethodToken,
+                    PaymentMethodType = result.Target.PaymentInstrumentType.ToString(),
+                    CreatedAt = DateTime.UtcNow
+                }
+            };
+        }
+
+        return new PaymentGatewayResult
+        {
+            Success = false,
+            ErrorMessage = result.Message,
+            GatewayUsed = PaymentGatewayType.Braintree
+        };
+    }
+
+    private async Task<PaymentGatewayResult> ProcessAuthorizeNetPaymentAsync(
+        decimal amount, 
+        string currency, 
+        string customerId, 
+        string paymentMethodToken)
+    {
+        var apiLoginId = _configuration["AuthorizeNet:ApiLoginId"] ?? 
+                         Environment.GetEnvironmentVariable("AUTHORIZENET_API_LOGIN_ID") ?? string.Empty;
+        var transactionKey = _configuration["AuthorizeNet:TransactionKey"] ?? 
+                             Environment.GetEnvironmentVariable("AUTHORIZENET_TRANSACTION_KEY") ?? string.Empty;
+        var environment = _configuration["AuthorizeNet:Environment"] ?? "sandbox";
+        
+        ApiOperationBase<ANetApiRequest, ANetApiResponse>.RunEnvironment = 
+            environment == "production" ? AuthorizeNet.Environment.PRODUCTION : AuthorizeNet.Environment.SANDBOX;
+
+        var merchantAuthentication = new merchantAuthenticationType
+        {
+            name = apiLoginId,
+            ItemElementName = ItemChoiceType.transactionKey,
+            Item = transactionKey
+        };
+
+        var creditCard = new creditCardType
+        {
+            cardNumber = paymentMethodToken.Split(':')[0],
+            expirationDate = paymentMethodToken.Split(':').Length > 1 ? paymentMethodToken.Split(':')[1] : "1225"
+        };
+
+        var paymentType = new paymentType { Item = creditCard };
+
+        var transactionRequest = new transactionRequestType
+        {
+            transactionType = transactionTypeEnum.authCaptureTransaction.ToString(),
+            amount = amount,
+            payment = paymentType,
+            customer = new customerDataType { id = customerId }
+        };
+
+        var request = new createTransactionRequest { transactionRequest = transactionRequest };
+        request.merchantAuthentication = merchantAuthentication;
+
+        var controller = new createTransactionController(request);
+        controller.Execute();
+
+        var response = controller.GetApiResponse();
+
+        if (response != null && response.transactionResponse != null)
+        {
+            if (response.transactionResponse.responseCode == "1")
+            {
+                return new PaymentGatewayResult
+                {
+                    Success = true,
+                    TransactionId = response.transactionResponse.transId,
+                    GatewayUsed = PaymentGatewayType.AuthorizeNet,
+                    Transaction = new PaymentGatewayTransaction
+                    {
+                        GatewayTransactionId = response.transactionResponse.transId,
+                        Gateway = "AuthorizeNet",
+                        GatewayType = PaymentGatewayType.AuthorizeNet,
+                        CustomerId = customerId,
+                        Amount = amount,
+                        Currency = currency,
+                        Status = "approved",
+                        PaymentMethodId = paymentMethodToken,
+                        PaymentMethodType = "credit_card",
+                        CreatedAt = DateTime.UtcNow
+                    }
+                };
+            }
+
+            var errorMessages = response.transactionResponse.errors?.Select(e => e.errorText).ToList() ?? new List<string>();
+            return new PaymentGatewayResult
+            {
+                Success = false,
+                ErrorMessage = string.Join(", ", errorMessages),
+                GatewayUsed = PaymentGatewayType.AuthorizeNet
+            };
+        }
+
+        return new PaymentGatewayResult
+        {
+            Success = false,
+            ErrorMessage = response?.messages?.message?.FirstOrDefault()?.text ?? "Unknown error",
+            GatewayUsed = PaymentGatewayType.AuthorizeNet
+        };
+    }
+
+    private async Task<PaymentGatewayResult> ProcessStripePaymentAsync(
+        decimal amount, 
+        string currency, 
+        string customerId, 
+        string paymentMethodToken)
+    {
+        try
+        {
+            var options = new PaymentIntentCreateOptions
+            {
+                Amount = (long)(amount * 100),
+                Currency = currency.ToLower(),
+                Customer = customerId,
+                PaymentMethod = paymentMethodToken,
+                Confirm = true,
+                AutomaticPaymentMethods = new PaymentIntentAutomaticPaymentMethodsOptions
+                {
+                    Enabled = true,
+                    AllowRedirects = "never"
+                }
+            };
+
+            var service = new PaymentIntentService();
+            var paymentIntent = await service.CreateAsync(options);
+
+            if (paymentIntent.Status == "succeeded")
+            {
+                return new PaymentGatewayResult
+                {
+                    Success = true,
+                    TransactionId = paymentIntent.Id,
+                    GatewayUsed = PaymentGatewayType.Stripe,
+                    Transaction = new PaymentGatewayTransaction
+                    {
+                        GatewayTransactionId = paymentIntent.Id,
+                        Gateway = "Stripe",
+                        GatewayType = PaymentGatewayType.Stripe,
+                        CustomerId = customerId,
+                        Amount = amount,
+                        Currency = currency,
+                        Status = paymentIntent.Status,
+                        PaymentMethodId = paymentMethodToken,
+                        PaymentMethodType = "card",
+                        CreatedAt = DateTime.UtcNow
+                    }
+                };
+            }
+
+            return new PaymentGatewayResult
+            {
+                Success = false,
+                ErrorMessage = $"Payment intent status: {paymentIntent.Status}",
+                GatewayUsed = PaymentGatewayType.Stripe
+            };
+        }
+        catch (StripeException ex)
+        {
+            return new PaymentGatewayResult
+            {
+                Success = false,
+                ErrorMessage = ex.Message,
+                GatewayUsed = PaymentGatewayType.Stripe
+            };
+        }
+    }
+
+    private async Task<BraintreeGateway> GetBraintreeGatewayAsync()
+    {
+        var environment = _configuration["Braintree:Environment"] ?? "sandbox";
+        var merchantId = _configuration["Braintree:MerchantId"] ?? 
+                         Environment.GetEnvironmentVariable("BRAINTREE_MERCHANT_ID") ?? string.Empty;
+        var publicKey = _configuration["Braintree:PublicKey"] ?? 
+                        Environment.GetEnvironmentVariable("BRAINTREE_PUBLIC_KEY") ?? string.Empty;
+        var privateKey = _configuration["Braintree:PrivateKey"] ?? 
+                         Environment.GetEnvironmentVariable("BRAINTREE_PRIVATE_KEY") ?? string.Empty;
+
+        var btEnvironment = environment == "production" 
+            ? BraintreeEnvironment.PRODUCTION 
+            : BraintreeEnvironment.SANDBOX;
+
+        return await Task.FromResult(new BraintreeGateway
+        {
+            Environment = btEnvironment,
+            MerchantId = merchantId,
+            PublicKey = publicKey,
+            PrivateKey = privateKey
+        });
     }
 
     public async Task<Transaction> MapToTransactionAsync(PaymentGatewayTransaction gatewayTransaction)
