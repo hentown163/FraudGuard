@@ -27,48 +27,65 @@ public class RateLimitingMiddleware
         var endpoint = $"{context.Request.Method}:{context.Request.Path}";
         var cacheKey = $"rate_limit:{clientIp}:{endpoint}";
 
-        if (!_cache.TryGetValue<RequestCounter>(cacheKey, out var counter))
+        var rateLimitEntry = _cache.GetOrCreate(cacheKey, entry =>
         {
-            counter = new RequestCounter
+            entry.SlidingExpiration = _timeWindow;
+            return new RateLimitEntry
             {
-                Count = 0,
-                WindowStart = DateTime.UtcNow
+                Lock = new SemaphoreSlim(1, 1),
+                Counter = new RequestCounter
+                {
+                    Count = 0,
+                    WindowStart = DateTime.UtcNow
+                }
             };
-        }
+        })!;
 
-        if (DateTime.UtcNow - counter!.WindowStart > _timeWindow)
+        await rateLimitEntry.Lock.WaitAsync();
+        try
         {
-            counter.Count = 0;
-            counter.WindowStart = DateTime.UtcNow;
-        }
-
-        counter.Count++;
-
-        _cache.Set(cacheKey, counter, _timeWindow);
-
-        if (counter.Count > _requestLimit)
-        {
-            _logger.LogWarning(
-                "Rate limit exceeded for IP: {IpAddress} on endpoint: {Endpoint}",
-                clientIp,
-                endpoint
-            );
-
-            context.Response.StatusCode = (int)HttpStatusCode.TooManyRequests;
-            context.Response.Headers.Append("Retry-After", _timeWindow.TotalSeconds.ToString());
-            
-            await context.Response.WriteAsJsonAsync(new
+            if (DateTime.UtcNow - rateLimitEntry.Counter.WindowStart > _timeWindow)
             {
-                error = "Rate limit exceeded. Please try again later.",
-                retryAfter = _timeWindow.TotalSeconds
-            });
-            
-            return;
-        }
+                rateLimitEntry.Counter.Count = 0;
+                rateLimitEntry.Counter.WindowStart = DateTime.UtcNow;
+            }
 
-        context.Response.Headers.Append("X-Rate-Limit-Remaining", (_requestLimit - counter.Count).ToString());
+            rateLimitEntry.Counter.Count++;
+
+            if (rateLimitEntry.Counter.Count > _requestLimit)
+            {
+                _logger.LogWarning(
+                    "Rate limit exceeded for IP: {IpAddress} on endpoint: {Endpoint}",
+                    clientIp,
+                    endpoint
+                );
+
+                context.Response.StatusCode = (int)HttpStatusCode.TooManyRequests;
+                context.Response.Headers.Append("Retry-After", _timeWindow.TotalSeconds.ToString());
+                
+                await context.Response.WriteAsJsonAsync(new
+                {
+                    error = "Rate limit exceeded. Please try again later.",
+                    retryAfter = _timeWindow.TotalSeconds
+                });
+                
+                return;
+            }
+
+            context.Response.Headers.Append("X-Rate-Limit-Remaining", (_requestLimit - rateLimitEntry.Counter.Count).ToString());
+        }
+        finally
+        {
+            rateLimitEntry.Lock.Release();
+        }
 
         await _next(context);
+    }
+
+    private class RateLimitEntry
+    {
+        public required SemaphoreSlim Lock { get; init; }
+        public required RequestCounter Counter { get; init; }
     }
 
     private class RequestCounter
