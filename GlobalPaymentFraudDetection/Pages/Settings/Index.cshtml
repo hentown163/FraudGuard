@@ -105,51 +105,13 @@
                     <div class="card">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Custom Alert Rules</h5>
-                            <button class="btn btn-sm btn-primary">
+                            <button class="btn btn-sm btn-primary" onclick="openAlertRuleModal()">
                                 <i class="bi bi-plus-circle"></i> Add Rule
                             </button>
                         </div>
                         <div class="card-body">
-                            <div class="list-group">
-                                <div class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h6 class="mb-1">High Value Transaction</h6>
-                                            <p class="mb-0 text-muted"><small>Alert when transaction > $5,000</small></p>
-                                        </div>
-                                        <div class="d-flex gap-2 align-items-center">
-                                            <span class="badge bg-success">Active</span>
-                                            <button class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></button>
-                                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h6 class="mb-1">Multiple Failed Attempts</h6>
-                                            <p class="mb-0 text-muted"><small>Alert when > 3 failed attempts in 10 minutes</small></p>
-                                        </div>
-                                        <div class="d-flex gap-2 align-items-center">
-                                            <span class="badge bg-success">Active</span>
-                                            <button class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></button>
-                                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h6 class="mb-1">Geographic Anomaly</h6>
-                                            <p class="mb-0 text-muted"><small>Alert on transactions from unusual countries</small></p>
-                                        </div>
-                                        <div class="d-flex gap-2 align-items-center">
-                                            <span class="badge bg-warning">Paused</span>
-                                            <button class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></button>
-                                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div id="alert-rules-list" class="list-group">
+                                <!-- Alert rules will be loaded dynamically -->
                             </div>
                         </div>
                     </div>
@@ -159,30 +121,14 @@
                     <div class="card">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0"><i class="bi bi-link-45deg"></i> Webhook Management</h5>
-                            <button class="btn btn-sm btn-primary">
+                            <button class="btn btn-sm btn-primary" onclick="openWebhookModal()">
                                 <i class="bi bi-plus-circle"></i> Add Webhook
                             </button>
                         </div>
                         <div class="card-body">
                             <p class="text-muted mb-4">Configure webhooks to receive real-time fraud detection events</p>
-                            <div class="list-group">
-                                <div class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <div>
-                                            <h6 class="mb-1">Slack Notifications</h6>
-                                            <p class="mb-0 text-muted"><small>https://hooks.slack.com/services/...</small></p>
-                                        </div>
-                                        <div class="d-flex gap-2 align-items-center">
-                                            <span class="badge bg-success">Active</span>
-                                            <button class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></button>
-                                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-                                        </div>
-                                    </div>
-                                    <div class="mt-2">
-                                        <span class="badge bg-info me-1">fraud.detected</span>
-                                        <span class="badge bg-info me-1">transaction.declined</span>
-                                    </div>
-                                </div>
+                            <div id="webhooks-list" class="list-group">
+                                <!-- Webhooks will be loaded dynamically -->
                             </div>
                         </div>
                     </div>
@@ -192,7 +138,7 @@
                     <div class="card">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0"><i class="bi bi-key"></i> API Keys</h5>
-                            <button class="btn btn-sm btn-primary">
+                            <button class="btn btn-sm btn-primary" onclick="openApiKeyModal()">
                                 <i class="bi bi-plus-circle"></i> Generate Key
                             </button>
                         </div>
@@ -200,19 +146,8 @@
                             <div class="alert alert-info">
                                 <i class="bi bi-info-circle"></i> Keep your API keys secure. Do not share them publicly.
                             </div>
-                            <div class="list-group">
-                                <div class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h6 class="mb-1">Production Key</h6>
-                                            <p class="mb-0"><code>fpd_pk_****************************</code></p>
-                                            <small class="text-muted">Created: Oct 1, 2025 | Last used: 2 hours ago</small>
-                                        </div>
-                                        <div>
-                                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Revoke</button>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div id="api-keys-list" class="list-group">
+                                <!-- API keys will be loaded dynamically -->
                             </div>
                         </div>
                     </div>
@@ -261,17 +196,471 @@
     </div>
 </div>
 
+<!-- Alert Rule Modal -->
+<div class="modal fade" id="alertRuleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Alert Rule</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="alertRuleForm">
+                    <input type="hidden" id="alertRuleId" />
+                    <div class="mb-3">
+                        <label class="form-label">Rule Name</label>
+                        <input type="text" class="form-control" id="alertRuleName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="alertRuleDescription" rows="2" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Condition</label>
+                        <select class="form-select" id="alertRuleCondition" required>
+                            <option value="Amount > threshold">Transaction Amount Greater Than</option>
+                            <option value="FailedAttempts > threshold">Failed Attempts Greater Than</option>
+                            <option value="FraudScore > threshold">Fraud Score Greater Than</option>
+                            <option value="UnusualLocation == true">Unusual Location Detected</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Threshold Value</label>
+                        <input type="number" class="form-control" id="alertRuleThreshold" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Action</label>
+                        <select class="form-select" id="alertRuleAction" required>
+                            <option value="Email">Email</option>
+                            <option value="SMS">SMS</option>
+                            <option value="Email,SMS">Email & SMS</option>
+                            <option value="Webhook">Webhook</option>
+                        </select>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="alertRuleActive" checked>
+                        <label class="form-check-label" for="alertRuleActive">Active</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveAlertRule()">Save Rule</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Webhook Modal -->
+<div class="modal fade" id="webhookModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Webhook</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="webhookForm">
+                    <input type="hidden" id="webhookId" />
+                    <div class="mb-3">
+                        <label class="form-label">Webhook Name</label>
+                        <input type="text" class="form-control" id="webhookName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Webhook URL</label>
+                        <input type="url" class="form-control" id="webhookUrl" placeholder="https://example.com/webhook" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Events to Subscribe</label>
+                        <div class="form-check">
+                            <input class="form-check-input webhook-event" type="checkbox" value="fraud.detected" id="event1" checked>
+                            <label class="form-check-label" for="event1">fraud.detected</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input webhook-event" type="checkbox" value="transaction.declined" id="event2">
+                            <label class="form-check-label" for="event2">transaction.declined</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input webhook-event" type="checkbox" value="transaction.approved" id="event3">
+                            <label class="form-check-label" for="event3">transaction.approved</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input webhook-event" type="checkbox" value="alert.triggered" id="event4">
+                            <label class="form-check-label" for="event4">alert.triggered</label>
+                        </div>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="webhookActive" checked>
+                        <label class="form-check-label" for="webhookActive">Active</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveWebhook()">Save Webhook</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- API Key Modal -->
+<div class="modal fade" id="apiKeyModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Generate API Key</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="apiKeyForm">
+                    <div class="mb-3">
+                        <label class="form-label">Key Name</label>
+                        <input type="text" class="form-control" id="apiKeyName" placeholder="e.g., Production Key" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Environment</label>
+                        <select class="form-select" id="apiKeyEnvironment">
+                            <option value="development">Development</option>
+                            <option value="staging">Staging</option>
+                            <option value="production">Production</option>
+                        </select>
+                    </div>
+                    <div id="apiKeyResult" class="alert alert-warning d-none">
+                        <h6><i class="bi bi-exclamation-triangle"></i> Save this key now!</h6>
+                        <p class="mb-2">You won't be able to see it again.</p>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="generatedKey" readonly>
+                            <button class="btn btn-outline-secondary" type="button" onclick="copyApiKey()">
+                                <i class="bi bi-clipboard"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="generateKeyBtn" onclick="generateApiKey()">Generate Key</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
+        // Load all data on page load
         document.addEventListener('DOMContentLoaded', function() {
+            loadAlertRules();
+            loadWebhooks();
+            loadApiKeys();
+            
+            // Save notification settings
             document.querySelectorAll('.btn-primary').forEach(btn => {
                 btn.addEventListener('click', function(e) {
-                    if (this.textContent.includes('Save')) {
+                    if (this.textContent.includes('Save Notification') || this.textContent.includes('Save Preferences')) {
                         e.preventDefault();
                         showToast('Settings saved successfully!', 'success');
                     }
                 });
             });
         });
+
+        // Alert Rules Functions
+        function openAlertRuleModal(rule = null) {
+            if (rule) {
+                document.getElementById('alertRuleId').value = rule.id;
+                document.getElementById('alertRuleName').value = rule.name;
+                document.getElementById('alertRuleDescription').value = rule.description;
+                document.getElementById('alertRuleCondition').value = rule.condition;
+                document.getElementById('alertRuleThreshold').value = rule.threshold;
+                document.getElementById('alertRuleAction').value = rule.action;
+                document.getElementById('alertRuleActive').checked = rule.isActive;
+                document.querySelector('#alertRuleModal .modal-title').textContent = 'Edit Alert Rule';
+            } else {
+                document.getElementById('alertRuleForm').reset();
+                document.getElementById('alertRuleId').value = '';
+                document.querySelector('#alertRuleModal .modal-title').textContent = 'Add Alert Rule';
+            }
+            new bootstrap.Modal(document.getElementById('alertRuleModal')).show();
+        }
+
+        async function saveAlertRule() {
+            const id = document.getElementById('alertRuleId').value;
+            const data = {
+                name: document.getElementById('alertRuleName').value,
+                description: document.getElementById('alertRuleDescription').value,
+                condition: document.getElementById('alertRuleCondition').value,
+                threshold: parseFloat(document.getElementById('alertRuleThreshold').value),
+                action: document.getElementById('alertRuleAction').value,
+                isActive: document.getElementById('alertRuleActive').checked
+            };
+
+            try {
+                const url = id ? `/api/Settings/alert-rules/${id}` : '/api/Settings/alert-rules';
+                const method = id ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('alertRuleModal')).hide();
+                    loadAlertRules();
+                    showToast('Alert rule saved successfully!', 'success');
+                } else {
+                    showToast('Error saving alert rule', 'error');
+                }
+            } catch (error) {
+                showToast('Error: ' + error.message, 'error');
+            }
+        }
+
+        async function loadAlertRules() {
+            try {
+                const response = await fetch('/api/Settings/alert-rules');
+                const rules = await response.json();
+                
+                const container = document.getElementById('alert-rules-list');
+                container.innerHTML = rules.map(rule => `
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">${rule.name}</h6>
+                                <p class="mb-0 text-muted"><small>${rule.description}</small></p>
+                            </div>
+                            <div class="d-flex gap-2 align-items-center">
+                                <span class="badge ${rule.isActive ? 'bg-success' : 'bg-warning'}">${rule.isActive ? 'Active' : 'Paused'}</span>
+                                <button class="btn btn-sm btn-outline-primary" onclick='editAlertRule(${JSON.stringify(rule)})'><i class="bi bi-pencil"></i></button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteAlertRule('${rule.id}')"><i class="bi bi-trash"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading alert rules:', error);
+            }
+        }
+
+        function editAlertRule(rule) {
+            openAlertRuleModal(rule);
+        }
+
+        async function deleteAlertRule(id) {
+            if (!confirm('Are you sure you want to delete this alert rule?')) return;
+            
+            try {
+                const response = await fetch(`/api/Settings/alert-rules/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    loadAlertRules();
+                    showToast('Alert rule deleted successfully!', 'success');
+                }
+            } catch (error) {
+                showToast('Error deleting alert rule', 'error');
+            }
+        }
+
+        // Webhook Functions
+        function openWebhookModal(webhook = null) {
+            if (webhook) {
+                document.getElementById('webhookId').value = webhook.id;
+                document.getElementById('webhookName').value = webhook.name;
+                document.getElementById('webhookUrl').value = webhook.url;
+                document.getElementById('webhookActive').checked = webhook.isActive;
+                document.querySelectorAll('.webhook-event').forEach(cb => {
+                    cb.checked = webhook.events.includes(cb.value);
+                });
+                document.querySelector('#webhookModal .modal-title').textContent = 'Edit Webhook';
+            } else {
+                document.getElementById('webhookForm').reset();
+                document.getElementById('webhookId').value = '';
+                document.querySelector('#webhookModal .modal-title').textContent = 'Add Webhook';
+            }
+            new bootstrap.Modal(document.getElementById('webhookModal')).show();
+        }
+
+        async function saveWebhook() {
+            const id = document.getElementById('webhookId').value;
+            const events = Array.from(document.querySelectorAll('.webhook-event:checked')).map(cb => cb.value);
+            
+            const data = {
+                name: document.getElementById('webhookName').value,
+                url: document.getElementById('webhookUrl').value,
+                events: events,
+                isActive: document.getElementById('webhookActive').checked
+            };
+
+            try {
+                const url = id ? `/api/Settings/webhooks/${id}` : '/api/Settings/webhooks';
+                const method = id ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('webhookModal')).hide();
+                    loadWebhooks();
+                    showToast('Webhook saved successfully!', 'success');
+                } else {
+                    showToast('Error saving webhook', 'error');
+                }
+            } catch (error) {
+                showToast('Error: ' + error.message, 'error');
+            }
+        }
+
+        async function loadWebhooks() {
+            try {
+                const response = await fetch('/api/Settings/webhooks');
+                const webhooks = await response.json();
+                
+                const container = document.getElementById('webhooks-list');
+                container.innerHTML = webhooks.map(webhook => `
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <h6 class="mb-1">${webhook.name}</h6>
+                                <p class="mb-0 text-muted"><small>${webhook.url}</small></p>
+                            </div>
+                            <div class="d-flex gap-2 align-items-center">
+                                <span class="badge ${webhook.isActive ? 'bg-success' : 'bg-warning'}">${webhook.isActive ? 'Active' : 'Inactive'}</span>
+                                <button class="btn btn-sm btn-outline-primary" onclick='editWebhook(${JSON.stringify(webhook)})'><i class="bi bi-pencil"></i></button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteWebhook('${webhook.id}')"><i class="bi bi-trash"></i></button>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            ${webhook.events.map(e => `<span class="badge bg-info me-1">${e}</span>`).join('')}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading webhooks:', error);
+            }
+        }
+
+        function editWebhook(webhook) {
+            openWebhookModal(webhook);
+        }
+
+        async function deleteWebhook(id) {
+            if (!confirm('Are you sure you want to delete this webhook?')) return;
+            
+            try {
+                const response = await fetch(`/api/Settings/webhooks/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    loadWebhooks();
+                    showToast('Webhook deleted successfully!', 'success');
+                }
+            } catch (error) {
+                showToast('Error deleting webhook', 'error');
+            }
+        }
+
+        // API Key Functions
+        function openApiKeyModal() {
+            document.getElementById('apiKeyForm').reset();
+            document.getElementById('apiKeyResult').classList.add('d-none');
+            document.getElementById('generateKeyBtn').classList.remove('d-none');
+            new bootstrap.Modal(document.getElementById('apiKeyModal')).show();
+        }
+
+        async function generateApiKey() {
+            const data = {
+                name: document.getElementById('apiKeyName').value,
+                environment: document.getElementById('apiKeyEnvironment').value
+            };
+
+            if (!data.name) {
+                showToast('Please enter a key name', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/Settings/api-keys', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    document.getElementById('generatedKey').value = result.key;
+                    document.getElementById('apiKeyResult').classList.remove('d-none');
+                    document.getElementById('generateKeyBtn').classList.add('d-none');
+                    loadApiKeys();
+                    showToast('API key generated successfully!', 'success');
+                } else {
+                    showToast('Error generating API key', 'error');
+                }
+            } catch (error) {
+                showToast('Error: ' + error.message, 'error');
+            }
+        }
+
+        async function loadApiKeys() {
+            try {
+                const response = await fetch('/api/Settings/api-keys');
+                const keys = await response.json();
+                
+                const container = document.getElementById('api-keys-list');
+                container.innerHTML = keys.map(key => {
+                    const created = new Date(key.createdAt).toLocaleDateString();
+                    const lastUsed = key.lastUsedAt ? new Date(key.lastUsedAt).toLocaleString() : 'Never';
+                    
+                    return `
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">${key.name} <span class="badge bg-secondary">${key.environment}</span></h6>
+                                    <p class="mb-0"><code>${key.key}</code></p>
+                                    <small class="text-muted">Created: ${created} | Last used: ${lastUsed}</small>
+                                </div>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="revokeApiKey('${key.id}')">
+                                        <i class="bi bi-trash"></i> Revoke
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Error loading API keys:', error);
+            }
+        }
+
+        async function revokeApiKey(id) {
+            if (!confirm('Are you sure you want to revoke this API key? This action cannot be undone.')) return;
+            
+            try {
+                const response = await fetch(`/api/Settings/api-keys/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    loadApiKeys();
+                    showToast('API key revoked successfully!', 'success');
+                }
+            } catch (error) {
+                showToast('Error revoking API key', 'error');
+            }
+        }
+
+        function copyApiKey() {
+            const input = document.getElementById('generatedKey');
+            input.select();
+            document.execCommand('copy');
+            showToast('API key copied to clipboard!', 'success');
+        }
+
+        // Toast notification helper
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type === 'success' ? 'success' : 'danger'} position-fixed top-0 end-0 m-3`;
+            toast.style.zIndex = '9999';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
     </script>
 }
