@@ -36,8 +36,9 @@ The system is built with ASP.NET Core 8.0 and Razor Pages, following a clean arc
 - API key management and general preferences.
 - **Settings Management** (implemented October 15, 2025):
   - Custom Alert Rules: Create, edit, and delete alert rules with conditions, thresholds, and actions
-  - Webhook Management: Configure webhooks for real-time fraud detection events
+  - Webhook Management: Configure webhooks for real-time fraud detection events with secure secret masking
   - API Key Generation: Generate and manage API keys with environment support and secure key masking
+  - **Security Features**: Webhook secrets and API keys masked in all read/update operations, only exposed once during creation with warning messages
 
 ## External Dependencies
 - **Cloud Services:** Azure Cosmos DB, Azure Event Hubs, Azure Service Bus, Azure Key Vault, Azure Application Insights.
