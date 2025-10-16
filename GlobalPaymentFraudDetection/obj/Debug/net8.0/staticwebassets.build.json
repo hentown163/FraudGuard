@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "EYilcISg35t+dBsm1DmZaTcIv6kTTKph/YlHjy5HWIc=",
+  "Hash": "x4UAW4+Da5GHGBjPepcSK4z5nNRqupKkUY4lDj3jXm8=",
   "Source": "GlobalPaymentFraudDetection",
   "BasePath": "_content/GlobalPaymentFraudDetection",
   "Mode": "Default",
@@ -72,6 +72,25 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot/css/hide-url-preview.css"
+    },
+    {
+      "Identity": "/home/runner/workspace/GlobalPaymentFraudDetection/wwwroot/css/leaflet-custom.css",
+      "SourceId": "GlobalPaymentFraudDetection",
+      "SourceType": "Discovered",
+      "ContentRoot": "/home/runner/workspace/GlobalPaymentFraudDetection/wwwroot/",
+      "BasePath": "_content/GlobalPaymentFraudDetection",
+      "RelativePath": "css/leaflet-custom.css",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot/css/leaflet-custom.css"
     },
     {
       "Identity": "/home/runner/workspace/GlobalPaymentFraudDetection/wwwroot/css/professional-theme.css",

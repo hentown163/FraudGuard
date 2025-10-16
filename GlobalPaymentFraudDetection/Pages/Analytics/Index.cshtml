@@ -76,15 +76,20 @@
     <div class="row mb-4">
         <div class="col-lg-6">
             <div class="card">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="bi bi-globe"></i> Geographic Fraud Heatmap</h5>
+                    <div class="btn-group btn-group-sm">
+                        <button type="button" class="btn btn-outline-primary active" id="heatmapViewBtn">Heatmap</button>
+                        <button type="button" class="btn btn-outline-primary" id="markersViewBtn">Markers</button>
+                    </div>
                 </div>
                 <div class="card-body">
-                    <div id="worldMap" style="height: 350px; background: var(--bg-tertiary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
-                        <div class="text-center">
-                            <i class="bi bi-geo-alt" style="font-size: 4rem; color: var(--text-muted);"></i>
-                            <p class="text-muted mt-2">Geographic data visualization</p>
-                        </div>
+                    <div id="worldMap" style="height: 400px; border-radius: var(--radius-md); z-index: 1;"></div>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle"></i> 
+                            Showing <span id="fraudPointsCount" class="fw-bold text-danger">0</span> fraudulent transactions from the last 30 days
+                        </small>
                     </div>
                 </div>
             </div>
@@ -193,6 +198,9 @@
 </div>
 
 @section Scripts {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -240,6 +248,189 @@
 
             document.getElementById('totalVolume').textContent = '2.4M';
             document.getElementById('fraudCount').textContent = '342';
+
+            // Initialize Geographic Fraud Heatmap
+            initializeFraudHeatmap();
         });
+
+        // Geographic Fraud Heatmap Implementation
+        let fraudMap;
+        let heatLayer;
+        let markersLayer;
+        let fraudData = [];
+        let currentView = 'heatmap';
+
+        async function initializeFraudHeatmap() {
+            try {
+                // Initialize Leaflet map
+                fraudMap = L.map('worldMap', {
+                    center: [20, 0],
+                    zoom: 2,
+                    minZoom: 2,
+                    maxZoom: 18,
+                    worldCopyJump: true
+                });
+
+                // Add dark theme tile layer (CartoDB Dark Matter)
+                const isDarkMode = document.body.classList.contains('dark-mode');
+                const tileUrl = isDarkMode 
+                    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+                    : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+
+                L.tileLayer(tileUrl, {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                    subdomains: 'abcd',
+                    maxZoom: 19
+                }).addTo(fraudMap);
+
+                // Fetch fraud data from API
+                const response = await fetch('/api/Analytics/fraud-heatmap?days=30&minFraudScore=0.5');
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    fraudData = result.data;
+                    document.getElementById('fraudPointsCount').textContent = fraudData.length;
+
+                    // Create heatmap layer
+                    createHeatmapLayer();
+
+                    // Create markers layer
+                    createMarkersLayer();
+
+                    // Show heatmap by default
+                    showHeatmap();
+                }
+
+                // Handle view toggle buttons
+                document.getElementById('heatmapViewBtn').addEventListener('click', function() {
+                    this.classList.add('active');
+                    document.getElementById('markersViewBtn').classList.remove('active');
+                    showHeatmap();
+                });
+
+                document.getElementById('markersViewBtn').addEventListener('click', function() {
+                    this.classList.add('active');
+                    document.getElementById('heatmapViewBtn').classList.remove('active');
+                    showMarkers();
+                });
+
+                // Update map on dark mode toggle
+                document.getElementById('darkModeToggle').addEventListener('click', function() {
+                    setTimeout(() => {
+                        const isDark = document.body.classList.contains('dark-mode');
+                        const newTileUrl = isDark 
+                            ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+                            : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+                        
+                        fraudMap.eachLayer(function(layer) {
+                            if (layer instanceof L.TileLayer) {
+                                fraudMap.removeLayer(layer);
+                            }
+                        });
+
+                        L.tileLayer(newTileUrl, {
+                            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                            subdomains: 'abcd',
+                            maxZoom: 19
+                        }).addTo(fraudMap);
+
+                        if (currentView === 'heatmap' && heatLayer) {
+                            heatLayer.addTo(fraudMap);
+                        } else if (currentView === 'markers' && markersLayer) {
+                            markersLayer.addTo(fraudMap);
+                        }
+                    }, 100);
+                });
+
+            } catch (error) {
+                console.error('Error initializing fraud heatmap:', error);
+                document.getElementById('worldMap').innerHTML = `
+                    <div class="text-center p-4">
+                        <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-2">Failed to load geographic data</p>
+                    </div>
+                `;
+            }
+        }
+
+        function createHeatmapLayer() {
+            // Prepare heatmap data: [lat, lng, intensity]
+            const heatmapData = fraudData.map(point => [
+                point.latitude,
+                point.longitude,
+                point.intensity || 0.5
+            ]);
+
+            heatLayer = L.heatLayer(heatmapData, {
+                radius: 25,
+                blur: 35,
+                maxZoom: 10,
+                max: 1.0,
+                gradient: {
+                    0.0: '#3b82f6',  // Blue (low)
+                    0.3: '#22c55e',  // Green (medium-low)
+                    0.5: '#eab308',  // Yellow (medium)
+                    0.7: '#f97316',  // Orange (high)
+                    1.0: '#ef4444'   // Red (critical)
+                }
+            });
+        }
+
+        function createMarkersLayer() {
+            markersLayer = L.layerGroup();
+
+            // Define custom icons for different fraud levels
+            const criticalIcon = L.icon({
+                iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI4IiBmaWxsPSIjZWY0NDQ0Ii8+PC9zdmc+',
+                iconSize: [16, 16],
+                iconAnchor: [8, 8]
+            });
+
+            const highIcon = L.icon({
+                iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI4IiBmaWxsPSIjZjk3MzE2Ii8+PC9zdmc+',
+                iconSize: [14, 14],
+                iconAnchor: [7, 7]
+            });
+
+            const mediumIcon = L.icon({
+                iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI4IiBmaWxsPSIjZWFiMzA4Ii8+PC9zdmc+',
+                iconSize: [12, 12],
+                iconAnchor: [6, 6]
+            });
+
+            fraudData.forEach(point => {
+                const icon = point.fraudScore >= 0.8 ? criticalIcon : 
+                            point.fraudScore >= 0.6 ? highIcon : mediumIcon;
+
+                const marker = L.marker([point.latitude, point.longitude], { icon: icon });
+                
+                // Create popup with fraud details
+                const popupContent = `
+                    <div style="min-width: 200px;">
+                        <h6 class="mb-2"><i class="bi bi-exclamation-triangle"></i> Fraud Detected</h6>
+                        <p class="mb-1"><strong>Location:</strong> ${point.city}, ${point.country}</p>
+                        <p class="mb-1"><strong>Amount:</strong> $${point.amount.toFixed(2)}</p>
+                        <p class="mb-1"><strong>Fraud Score:</strong> <span class="badge bg-danger">${(point.fraudScore * 100).toFixed(1)}%</span></p>
+                        <p class="mb-1"><strong>Transaction ID:</strong> ${point.transactionId}</p>
+                        <p class="mb-0"><small class="text-muted">${new Date(point.timestamp).toLocaleString()}</small></p>
+                    </div>
+                `;
+                
+                marker.bindPopup(popupContent);
+                markersLayer.addLayer(marker);
+            });
+        }
+
+        function showHeatmap() {
+            currentView = 'heatmap';
+            if (markersLayer) fraudMap.removeLayer(markersLayer);
+            if (heatLayer) heatLayer.addTo(fraudMap);
+        }
+
+        function showMarkers() {
+            currentView = 'markers';
+            if (heatLayer) fraudMap.removeLayer(heatLayer);
+            if (markersLayer) markersLayer.addTo(fraudMap);
+        }
     </script>
 }

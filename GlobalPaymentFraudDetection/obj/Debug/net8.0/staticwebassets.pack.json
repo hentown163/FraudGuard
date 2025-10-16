@@ -9,6 +9,10 @@
       "PackagePath": "staticwebassets/css/hide-url-preview.css"
     },
     {
+      "Id": "/home/runner/workspace/GlobalPaymentFraudDetection/wwwroot/css/leaflet-custom.css",
+      "PackagePath": "staticwebassets/css/leaflet-custom.css"
+    },
+    {
       "Id": "/home/runner/workspace/GlobalPaymentFraudDetection/wwwroot/css/professional-theme.css",
       "PackagePath": "staticwebassets/css/professional-theme.css"
     },
