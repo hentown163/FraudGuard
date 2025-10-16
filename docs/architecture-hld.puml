@@ -1,0 +1,144 @@
+@startuml
+skinparam componentStyle rectangle
+skinparam backgroundColor #ffffff
+skinparam shadowing false
+skinparam wrapWidth 200
+skinparam defaultFontName Inter
+skinparam ArrowColor #0A3D62
+skinparam ArrowThickness 1.5
+
+package "Presentation Layer" {
+  component "Razor Pages UI\n(Dashboard, Alerts, Transactions)" as RazorUI
+  component "JavaScript Clients\n(Chart.js, jsPDF, Dark Mode)" as JSClients
+  component "SignalR Client" as SignalRClient
+  component "FraudDetectionHub\n(SignalR)" as SignalRHub
+}
+
+package "API Layer" {
+  component "FraudDetectionController" as FraudApi
+  component "WebhookController" as WebhookApi
+  component "AlertsController" as AlertsApi
+  component "Settings APIs" as SettingsApi
+}
+
+package "Core / Business Services" {
+  component "FraudScoringService" as FraudScoring
+  component "BehavioralAnalysisService" as BehavioralSvc
+  component "AdvancedRiskScoringService" as AdvancedRisk
+  component "EnsembleModelService" as EnsembleSvc
+  component "OnnxModelService\n(ONNX Runtime)" as OnnxSvc
+  component "PaymentGatewayService" as PaymentGatewaySvc
+  component "CosmosDbService" as CosmosSvc
+  component "ServiceBusService" as ServiceBusSvc
+  component "NotificationService\n(Email/SMS)" as NotificationSvc
+  component "KeyVaultService" as KeyVaultSvc
+  component "SiftScienceService" as SiftSvc
+  component "FraudRulesEngine" as RulesEngine
+  component "UnitOfWork" as UnitOfWork
+}
+
+package "Infrastructure / Middleware" {
+  component "ExceptionHandlingMiddleware" as ExceptionMw
+  component "RequestLoggingMiddleware" as LoggingMw
+  component "RateLimitingMiddleware" as RateLimitMw
+  component "IdempotencyMiddleware" as IdempotencyMw
+  component "Application Insights SDK" as AppInsights
+}
+
+package "Azure Functions" {
+  component "HTTP Triggers\n(AnalyzeFraud, BulkAnalyze)" as HttpFuncs
+  component "Service Bus Triggers\n(ProcessFraudAlert, ProcessBatchTransactions)" as SbFuncs
+  component "Timer Triggers\n(GenerateDailyFraudReport, HourlyAnomalyDetection)" as TimerFuncs
+}
+
+package "External Integrations" {
+  component "Stripe" as Stripe
+  component "PayPal" as PayPal
+  component "Braintree" as Braintree
+  component "Authorize.Net" as AuthorizeNet
+  component "Azure Cosmos DB" as CosmosDb
+  component "Azure Service Bus" as ServiceBus
+  component "Azure Event Hubs" as EventHubs
+  component "Azure Key Vault" as KeyVault
+  component "Azure Application Insights" as AppInsightsSvc
+  component "Azure AI Services\n(OpenAI, Search, Anomaly Detector, Text Analytics)" as AzureAI
+  component "Twilio" as Twilio
+  component "Email Provider" as EmailSvc
+  component "MaxMind GeoIP2" as MaxMind
+  component "Client Browsers / Admins" as Admin
+}
+
+Admin --> RazorUI : HTTPS
+Admin --> JSClients
+SignalRClient --> SignalRHub : WebSockets
+
+SignalRHub -> ServiceBusSvc : Subscribe for updates
+SignalRHub -> RazorUI : Push real-time fraud events
+
+RazorUI --> FraudApi : REST
+RazorUI --> AlertsApi : REST
+RazorUI --> SettingsApi : REST
+JSClients --> SignalRHub : Live metrics
+
+WebhookApi --> RateLimitMw
+RateLimitMw --> IdempotencyMw
+IdempotencyMw --> FraudScoring
+
+FraudApi --> FraudScoring
+AlertsApi --> FraudScoring
+SettingsApi --> KeyVaultSvc
+
+FraudScoring --> BehavioralSvc
+FraudScoring --> AdvancedRisk
+FraudScoring --> EnsembleSvc
+FraudScoring --> OnnxSvc
+FraudScoring --> RulesEngine
+FraudScoring --> CosmosSvc
+FraudScoring --> ServiceBusSvc : Publish alerts & events
+FraudScoring --> NotificationSvc
+FraudScoring --> PaymentGatewaySvc
+
+BehavioralSvc --> MaxMind
+BehavioralSvc --> CosmosSvc
+AdvancedRisk --> AzureAI
+EnsembleSvc --> OnnxSvc
+OnnxSvc --> "ONNX Models" as OnnxModels
+CosmosSvc --> CosmosDb
+ServiceBusSvc --> ServiceBus
+ServiceBusSvc --> SignalRHub : Broadcast processed alerts
+ServiceBusSvc --> EventHubs : Stream analytics
+NotificationSvc --> Twilio
+NotificationSvc --> EmailSvc
+KeyVaultSvc --> KeyVault
+PaymentGatewaySvc --> Stripe
+PaymentGatewaySvc --> PayPal
+PaymentGatewaySvc --> Braintree
+PaymentGatewaySvc --> AuthorizeNet
+
+ExceptionMw <.. AppInsights
+LoggingMw <.. AppInsights
+RateLimitMw <.. AppInsights
+FraudScoring ..> AppInsights : Custom telemetry
+AppInsights --> AppInsightsSvc : Telemetry data
+
+ServiceBus --> SbFuncs : Fraud alert queue
+SbFuncs --> FraudScoring : Invoke shared services
+SbFuncs --> CosmosSvc
+SbFuncs --> ServiceBusSvc : Enqueue downstream events
+SbFuncs --> SignalRHub : Notify dashboard
+
+HttpFuncs --> FraudScoring
+HttpFuncs --> CosmosSvc
+HttpFuncs --> ServiceBusSvc
+HttpFuncs --> NotificationSvc
+
+TimerFuncs --> FraudScoring : Scheduled risk jobs
+TimerFuncs --> CosmosSvc : Aggregate reports
+TimerFuncs --> ServiceBusSvc : Dispatch anomalies
+
+EventHubs --> AzureAI : Streaming analytics
+AzureAI --> FraudScoring : Insights & enrichment
+
+SignalRHub --> Admin : Push alerts & trends
+
+@enduml
