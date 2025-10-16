@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("GlobalPaymentFraudDetection")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0e83938c53d1cc1487dcf177d3007fb2cba0f08b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e8c43bf3238085eda4e1aa53dab354822f037b37")]
 [assembly: System.Reflection.AssemblyProductAttribute("GlobalPaymentFraudDetection")]
 [assembly: System.Reflection.AssemblyTitleAttribute("GlobalPaymentFraudDetection")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

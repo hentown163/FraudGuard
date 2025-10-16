@@ -235,9 +235,253 @@ A legitimate customer's account on a digital services marketplace is compromised
 
 ---
 
+## Use Case 3: Online Banking - Wire Transfer Fraud & Money Laundering Detection
+
+### Scenario
+A retail bank's customer account is targeted by sophisticated fraudsters who use social engineering to initiate a large wire transfer. The system detects unusual patterns and prevents potential money laundering activity.
+
+### End-to-End Flow
+
+#### 1. Initial Compromise & Social Engineering
+- **Actor**: Organized fraud ring targeting elderly customers
+- **Victim**: 68-year-old retired customer with $85,000 checking account balance
+- **Attack Vector**: Phone scam ("IRS tax fraud" threat)
+- **Action**: Customer instructed to wire $25,000 to "safe government account" to avoid arrest
+- **Normal Behavior**: Small monthly transfers ($500-$1,200), local bill payments, ATM withdrawals
+
+#### 2. Wire Transfer Initiation
+- Customer logs into online banking from home computer (verified device)
+- Initiates international wire transfer:
+  - Amount: $25,000
+  - Destination: Account in Hong Kong (first international transfer ever)
+  - Beneficiary: Unknown business entity "Global Trade Solutions Ltd"
+  - Purpose: "Tax Payment" (unusual for international wire)
+  - Transaction time: 11:47 PM (outside normal banking hours)
+
+#### 3. Payment Gateway & Transaction Capture
+- **PaymentGatewayService** receives wire transfer request via Authorize.Net banking API
+- System captures comprehensive transaction data:
+  - Wire amount: $25,000 (largest single transaction in 5 years)
+  - Destination country: Hong Kong (high-risk jurisdiction)
+  - Customer age: 68 (elderly demographic - higher fraud risk)
+  - Transaction type: International wire (first ever for this account)
+  - Time: 23:47 local time (unusual for this customer)
+  - Device: Recognized device but unusual browser activity (rapid clicks, multiple form corrections)
+
+#### 4. Multi-Layer Fraud Detection Analysis
+
+**Step 4a: Behavioral Pattern Analysis**
+- **BehavioralAnalysisService** performs deep behavioral analysis:
+  - Historical velocity check: Average monthly outbound: $1,800 → Sudden $25,000 spike
+  - Geographic analysis via MaxMind GeoIP2:
+    - Customer location: Verified (home IP in Texas)
+    - Destination country: Hong Kong (flagged as higher-risk for elder fraud)
+  - Account age analysis: 12-year customer, zero international wires
+  - Time-of-day analysis: Transaction at 11:47 PM (customer typically banks 9 AM - 2 PM)
+  - Session behavior: 7 failed attempts to enter routing number (sign of being instructed by phone)
+
+**Step 4b: Machine Learning Risk Assessment**
+- **OnnxModelService** runs multiple ONNX fraud models:
+  - Elder fraud detection model: 0.94 score (very high probability)
+  - Wire transfer fraud model: 0.88 score
+  - Money laundering pattern model: 0.82 score (unusual beneficiary + high amount)
+  - **EnsembleModelService** aggregates: **Final ML Score: 0.91/1.0**
+
+**Step 4c: Advanced AI-Powered Analysis**
+- **AdvancedRiskScoringService** leverages Azure AI capabilities:
+  - **Azure Text Analytics** analyzes transaction notes:
+    - Purpose field: "Tax Payment" - semantic analysis flags inconsistency
+    - Text sentiment analysis: Detects stress indicators in notes
+  - **Azure Anomaly Detector**: 
+    - Flags transaction as 99.4% anomalous compared to 5-year baseline
+    - Detects sudden change in transaction pattern (sharp deviation)
+  - **Azure OpenAI** contextual analysis:
+    - Prompt: "Analyze this banking transaction for fraud indicators"
+    - Response: "HIGH RISK - Classic elder fraud pattern: Large international wire, unusual hour, tax payment claim to Hong Kong, elderly customer, first international transfer, multiple input errors suggesting phone instruction"
+
+**Step 4d: Money Laundering & AML Checks**
+- **FraudScoringService** performs AML analysis:
+  - Beneficiary screening: "Global Trade Solutions Ltd" not in known contacts
+  - OFAC/sanctions list check: Destination bank flagged for past money laundering concerns
+  - Structuring analysis: Single large transfer just under $30K reporting threshold
+  - Layering detection: Checks if beneficiary has rapid transfer patterns
+  - **CosmosDbService** queries historical data: Zero prior relationship with beneficiary
+
+**Step 4e: Rules Engine Multi-Factor Evaluation**
+- **FraudRulesEngine** applies banking-specific alert rules:
+  - ✅ "International wire > $10,000 from customer age 65+ with no prior international transfers"
+  - ✅ "Transaction amount > 10x monthly average outbound"
+  - ✅ "Wire transfer outside normal banking hours (10 PM - 6 AM)"
+  - ✅ "High-risk destination country + elderly customer + tax-related purpose"
+  - ✅ "Multiple form field errors (>5) suggesting external instruction"
+  - ✅ "First-time international wire > $20,000"
+
+#### 5. Real-Time Fraud Scoring & Risk Classification
+- **FraudScoringService** calculates comprehensive risk score:
+  - Behavioral anomaly score: 93/100
+  - ML model ensemble score: 91/100
+  - AML/money laundering risk: 85/100
+  - Rules engine triggers: 6/6 critical rules
+  - **Final Fraud Score: 94/100 (CRITICAL RISK)**
+  - **Classification: ELDER FRAUD + POTENTIAL MONEY LAUNDERING**
+  - **Recommended Action: IMMEDIATE BLOCK + CUSTOMER CONTACT**
+
+#### 6. Automated Intervention & Alert Cascade
+
+**Step 6a: Immediate Transaction Hold**
+- Wire transfer automatically **BLOCKED** before processing
+- Transaction status: "PENDING FRAUD REVIEW"
+- Funds remain in customer account (not released)
+
+**Step 6b: Multi-Channel Alert Distribution**
+- **ServiceBusService** publishes critical alert to Azure Service Bus
+- **NotificationService** triggers coordinated response:
+  - **Email**: Sent to customer's registered email: "Wire transfer blocked - please verify"
+  - **SMS via Twilio**: "SECURITY ALERT: $25K wire to Hong Kong blocked. Call us immediately if unauthorized: 1-800-XXX-XXXX"
+  - **Phone call**: Automated call placed to registered phone number
+  - **Branch Alert**: Notification sent to customer's home branch manager
+  - **Fraud Team SMS**: On-call fraud investigator receives critical alert
+
+**Step 6c: Real-Time Dashboard Alert**
+- **Azure Service Bus Trigger** (ProcessFraudAlert) processes high-priority alert
+- **SignalRHub** broadcasts to all connected fraud analyst dashboards
+- Alert appears with **CRITICAL** designation:
+  - Flashing red indicator
+  - Elder fraud pattern detected
+  - Recommended actions displayed
+  - Customer contact information readily available
+
+#### 7. Fraud Analyst Immediate Response
+- Senior fraud analyst receives alert within 15 seconds
+- Reviews complete transaction profile on **Fraud Detection Dashboard**:
+  - Customer demographics: Age 68, 12-year customer, $85K balance
+  - Transaction details: $25K to Hong Kong, "tax payment" purpose
+  - Risk indicators: All 6 critical rules triggered
+  - Historical baseline: Clean 12-year history, never flagged before
+  - ML confidence: 94% fraud probability
+
+- Analyst actions via dashboard:
+  1. Clicks **"Initiate Customer Contact"**
+  2. System auto-dials customer's registered phone
+  3. Analyst speaks with customer: "This is your bank's fraud prevention team..."
+
+#### 8. Customer Interaction & Fraud Confirmation
+- **Conversation**:
+  - Analyst: "Did you just attempt a $25,000 wire to Hong Kong?"
+  - Customer: "Yes, the IRS called and said I owe back taxes and will be arrested if I don't pay immediately to their international processing center."
+  - Analyst: "This is a scam. The IRS never demands immediate international wire transfers."
+
+- **Immediate Actions**:
+  - Customer realizes they've been scammed (no money lost - transaction was blocked)
+  - Analyst updates alert status: "CONFIRMED FRAUD - ELDER SCAM"
+  - Customer education provided about IRS scams
+  - Account flagged for enhanced monitoring (30 days)
+  - Incident report filed with law enforcement
+
+#### 9. Post-Incident Analysis & Intelligence Gathering
+- **FraudScoringService** updates case with resolution details
+- **CosmosDbService** persists complete case record:
+  - Fraud type: Elder fraud / IRS impersonation scam
+  - Amount prevented: $25,000
+  - Detection method: ML + Behavioral + Rules
+  - Resolution: Confirmed fraud, customer protected
+
+- **Azure Event Hubs** streams intelligence:
+  - Beneficiary account "Global Trade Solutions Ltd" added to watchlist
+  - Hong Kong receiving bank flagged for investigation
+  - Elder fraud pattern shared with other financial institutions
+
+#### 10. Azure Functions - Pattern Detection & Reporting
+
+**HTTP Trigger - BulkAnalyze**
+- Fraud team uses dashboard to trigger bulk analysis
+- System queries **CosmosDbService** for similar patterns in past 30 days
+- Identifies 8 similar attempts:
+  - All targeting customers age 60+
+  - All claiming "tax payment" or "legal fees"
+  - All to Hong Kong or China accounts
+  - Total attempted fraud: $178,000
+  - Successfully blocked: $165,000 (92.7% prevention rate)
+
+**Service Bus Trigger - ProcessBatchTransactions**
+- Receives alert from **ServiceBusService**
+- Automatically updates internal fraud database
+- Triggers webhook to **Financial Crimes Enforcement Network (FinCEN)**
+- Files Suspicious Activity Report (SAR) automatically
+
+**Timer Trigger - GenerateDailyFraudReport**
+- Runs at 7:00 AM daily
+- Compiles comprehensive fraud prevention report:
+  - Elder fraud attempts: 8 blocked yesterday
+  - Total fraud prevented: $178,000
+  - Detection accuracy: 100%
+  - False positives: 2 (legitimate large international wires - manually approved)
+  - Average detection time: 1.2 seconds
+
+#### 11. Compliance & Regulatory Reporting
+- **Application Insights** logs complete audit trail:
+  - Every decision point timestamped
+  - All analyst actions recorded
+  - Customer communication logged
+  - Regulatory compliance demonstrated
+
+- Automated compliance reports generated:
+  - **SAR (Suspicious Activity Report)** filed with FinCEN
+  - **BSA/AML compliance** documentation updated
+  - **OFAC screening** results archived
+  - **Consumer protection** metrics tracked
+
+- **Analytics Dashboard** updated with KPIs:
+  - Elder fraud prevention rate: 98.2%
+  - Average customer loss prevented: $22,500
+  - Regulatory compliance score: 100%
+  - Customer satisfaction (saved from fraud): 5/5 stars
+
+#### 12. Continuous Improvement & Model Updates
+- **Machine learning pipeline** updates:
+  - Elder fraud detection model retrained with new case
+  - Hong Kong wire transfer patterns added to risk scoring
+  - "Tax payment" to international accounts flagged higher
+  - Time-of-day risk factors strengthened for elderly customers
+
+- **FraudRulesEngine** enhanced:
+  - New rule added: "International wire + 'IRS/tax' keyword + age 60+ = CRITICAL"
+  - Threshold adjusted: International wires from seniors now require dual approval
+  - Beneficiary watchlist updated with known scam accounts
+
+### Outcome
+- **Fraud Prevented**: $25,000 wire transfer blocked
+- **Customer Impact**: Zero financial loss, elderly customer protected and educated
+- **Detection Time**: 1.2 seconds (real-time)
+- **Secondary Prevention**: 8 similar elder fraud attempts blocked (total $178,000 saved)
+- **ROI**: 
+  - Direct savings: $25,000 per customer
+  - Total campaign prevention: $178,000
+  - Regulatory compliance: $0 fines (full AML/BSA compliance)
+  - Brand protection: Customer loyalty retained, positive media coverage
+  - Law enforcement cooperation: 3 arrests made in fraud ring
+- **Regulatory Value**: 
+  - Automatic SAR filing (FinCEN compliance)
+  - Complete audit trail for regulators
+  - Demonstrated due diligence for OCC/FDIC examinations
+  - Consumer Financial Protection Bureau (CFPB) requirements met
+
+### Key Banking-Specific Features Utilized
+
+1. **AML/BSA Compliance**: Automated OFAC screening, SAR filing, transaction monitoring
+2. **Elder Fraud Detection**: Age-based risk scoring, behavioral pattern analysis
+3. **Wire Transfer Controls**: Pre-authorization blocks, dual approval workflows
+4. **Real-Time Customer Contact**: Immediate phone/SMS outreach to verify transactions
+5. **Regulatory Reporting**: Automated compliance documentation and audit trails
+6. **Intelligence Sharing**: Cross-institution fraud pattern distribution
+7. **Money Laundering Detection**: Structuring analysis, layering detection, beneficiary screening
+8. **Consumer Protection**: Customer education, enhanced monitoring, law enforcement coordination
+
+---
+
 ## Key System Capabilities Demonstrated
 
-### Both Use Cases Highlight:
+### All Three Use Cases Highlight:
 
 1. **Real-Time Processing**: Sub-second fraud detection (< 1 second)
 2. **Multi-Signal Analysis**: Combines behavioral, ML, rules, and AI insights
