@@ -13,7 +13,7 @@ package "Presentation Layer" {
   component "SignalR Client" as SignalRClient
   component "FraudDetectionHub\n(SignalR)" as SignalRHub
 }
-
+ 
 package "API Layer" {
   component "FraudDetectionController" as FraudApi
   component "WebhookController" as WebhookApi
@@ -142,3 +142,68 @@ AzureAI --> FraudScoring : Insights & enrichment
 SignalRHub --> Admin : Push alerts & trends
 
 @enduml
+-----------------
+  @startuml
+  skinparam componentStyle rectangle
+  skinparam backgroundColor #ffffff
+  skinparam shadowing false
+  skinparam wrapWidth 200
+  skinparam defaultFontName Inter
+  skinparam ArrowColor #0A3D62
+  skinparam ArrowThickness 1.5
+
+  package "Presentation Layer" {
+    component "Razor Pages UI\n(Dashboard, Alerts, Transactions)" as RazorUI
+    component "JS Clients\n(Chart.js, jsPDF, Dark Mode)" as JSClients
+    component "SignalR Hub\n(Real-time Events)" as SignalRHub
+  }
+
+  package "API Layer" {
+    component "REST APIs\n(Fraud, Alerts, Settings)" as ApiLayer
+  }
+
+  package "Core / Business Services" {
+    component "Fraud Scoring & Analysis" as FraudCore
+    component "Notification Service" as NotificationSvc
+    component "Payment Gateways" as PaymentSvc
+    component "Database Service\n(CosmosDB)" as DatabaseSvc
+    component "Rules Engine & Models" as RulesModels
+  }
+
+  package "Infrastructure / Middleware" {
+    component "Middleware & Logging" as Middleware
+  }
+
+  package "Azure Functions" {
+    component "Functions\n(HTTP, Service Bus, Timer)" as AzureFuncs
+  }
+
+  package "External Integrations" {
+    component "External Services\n(Payment, Twilio, AI, GeoIP, KeyVault)" as External
+  }
+
+  ' User interactions
+  Admin --> RazorUI : HTTPS
+  Admin --> JSClients
+  JSClients --> SignalRHub : Live metrics
+  SignalRHub --> RazorUI : Push alerts
+
+  ' API interactions
+  RazorUI --> ApiLayer
+  ApiLayer --> FraudCore
+  ApiLayer --> DatabaseSvc
+  ApiLayer --> Middleware
+
+  ' Core services
+  FraudCore --> RulesModels
+  FraudCore --> DatabaseSvc
+  FraudCore --> NotificationSvc
+  FraudCore --> PaymentSvc
+  FraudCore --> External : AI / Geo / KeyVault
+
+  ' Azure Functions
+  AzureFuncs --> FraudCore
+  AzureFuncs --> DatabaseSvc
+  AzureFuncs --> NotificationSvc
+
+  @enduml
