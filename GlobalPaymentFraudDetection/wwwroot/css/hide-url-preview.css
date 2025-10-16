@@ -1,0 +1,13 @@
+/* Hide URL Preview on Hover - Global Styles */
+
+a, a:hover, a:focus, a:active {
+    text-decoration: none;
+}
+
+a[href] {
+    cursor: pointer;
+}
+
+.no-url-preview {
+    pointer-events: auto;
+}

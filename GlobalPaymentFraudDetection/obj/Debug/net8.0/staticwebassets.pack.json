@@ -5,6 +5,10 @@
       "PackagePath": "staticwebassets/GlobalPaymentFraudDetection.bundle.scp.css"
     },
     {
+      "Id": "/home/runner/workspace/GlobalPaymentFraudDetection/wwwroot/css/hide-url-preview.css",
+      "PackagePath": "staticwebassets/css/hide-url-preview.css"
+    },
+    {
       "Id": "/home/runner/workspace/GlobalPaymentFraudDetection/wwwroot/css/professional-theme.css",
       "PackagePath": "staticwebassets/css/professional-theme.css"
     },
@@ -15,6 +19,10 @@
     {
       "Id": "/home/runner/workspace/GlobalPaymentFraudDetection/wwwroot/favicon.ico",
       "PackagePath": "staticwebassets/favicon.ico"
+    },
+    {
+      "Id": "/home/runner/workspace/GlobalPaymentFraudDetection/wwwroot/js/hide-url-preview.js",
+      "PackagePath": "staticwebassets/js/hide-url-preview.js"
     },
     {
       "Id": "/home/runner/workspace/GlobalPaymentFraudDetection/wwwroot/js/site.js",
