@@ -3,6 +3,7 @@
 /home/runner/workspace/GlobalPaymentFraudDetection/bin/Debug/net8.0/msvcp140.dll
 /home/runner/workspace/GlobalPaymentFraudDetection/bin/Debug/net8.0/vcruntime140.dll
 /home/runner/workspace/GlobalPaymentFraudDetection/bin/Debug/net8.0/vcruntime140_1.dll
+/home/runner/workspace/GlobalPaymentFraudDetection/bin/Debug/net8.0/NuGet.config
 /home/runner/workspace/GlobalPaymentFraudDetection/bin/Debug/net8.0/appsettings.Development.json
 /home/runner/workspace/GlobalPaymentFraudDetection/bin/Debug/net8.0/appsettings.json
 /home/runner/workspace/GlobalPaymentFraudDetection/bin/Debug/net8.0/GlobalPaymentFraudDetection.staticwebassets.runtime.json
